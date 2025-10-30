@@ -15,10 +15,10 @@ export default function AdminDrawer() {
     <Drawer.Navigator
       initialRouteName="Estoque de Peças"
       screenOptions={{
-        headerStyle: { backgroundColor: '#6200ee' },
-        headerTintColor: '#fff',
+        headerStyle: { backgroundColor: '#0dc50dbe' },
+        headerTintColor: '#0a0a0aff',
         headerTitleAlign: 'center', // Centraliza o título
-        drawerActiveTintColor: '#6200ee',
+        drawerActiveTintColor: '#0dc50dbe',
         drawerLabelStyle: { fontSize: 16 },
       }}
     >
