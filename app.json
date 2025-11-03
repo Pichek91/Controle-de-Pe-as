@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "controle-pecas",
+    "name": "Grancoffee Peças",
     "slug": "controle-pecas",
-    "version": "1.0.0",
+    "version": "1.0.5",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "controlepecas",
@@ -12,31 +12,32 @@
       "supportsTablet": true
     },
     "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
-      },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.pichek91.controlepecas"
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/icon.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
+          "image": "./assets/images/splash.png",
+          "resizeMode": "cover",
           "backgroundColor": "#ffffff",
           "dark": {
             "backgroundColor": "#000000"
+          }
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": false
           }
         }
       ]
@@ -49,7 +50,10 @@
       "router": {},
       "eas": {
         "projectId": "d356350a-58ef-47d3-a25b-30a64081e98d"
-      }
+      },
+      "env": "prod",
+      "apiBaseProd": "https://api.grancoffeepecas.com.br",
+      "apiBaseDev": "http://10.0.2.2:3000"
     }
   }
 }

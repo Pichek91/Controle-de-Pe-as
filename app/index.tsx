@@ -1,27 +1,26 @@
 // controle-pecas/app/index.tsx
-import { useEffect } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect } from 'react';
+import { View } from 'react-native';
 
 export default function IndexScreen() {
   const router = useRouter();
 
   useEffect(() => {
-    // Redireciona para login após 1 segundo
-    const timer = setTimeout(() => {
-      router.replace('/login'); // Caminho da tela de login
-    }, 1000);
+    let t: any;
 
-    return () => clearTimeout(timer);
-  }, []);
+    // Mantém o splash por ~3s e navega direto
+    t = setTimeout(async () => {
+      // Fecha o splash (agora a UI RN fica visível)
+      await SplashScreen.hideAsync();
+      // Redireciona imediatamente para a tela de login
+      router.replace('/login');
+    }, 3000); // ajuste o tempo (ms) como preferir
 
-  return (
-    <View style={styles.container}>
-      <ActivityIndicator size="large" color="#007AFF" />
-    </View>
-  );
+    return () => clearTimeout(t);
+  }, [router]);
+
+  // Enquanto o splash estiver visível, nada aqui aparece
+  return <View />;
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-});
