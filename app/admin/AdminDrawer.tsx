@@ -1,12 +1,13 @@
-import React from 'react';
-import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
-import EstoqueScreen from './screens/EstoqueScreen';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import React from 'react';
+import CustomDrawerContent from '../../components/CustomDrawerContent';
 import CadastrarScreen from './screens/CadastrarScreen';
+import EstoqueScreen from './screens/EstoqueScreen';
+import LogoutScreen from './screens/LogoutScreen';
+import PecasReconScreen from './screens/PecasReconScreen';
 import RecebimentosScreen from './screens/RecebimentosScreen';
 import ReconScreen from './screens/ReconScreen';
-import PecasReconScreen from './screens/PecasReconScreen';
-import LogoutScreen from './screens/LogoutScreen';
 
 const Drawer = createDrawerNavigator();
 
@@ -21,6 +22,7 @@ export default function AdminDrawer() {
         drawerActiveTintColor: '#0dc50dbe',
         drawerLabelStyle: { fontSize: 16 },
       }}
+      drawerContent={(props) => <CustomDrawerContent {...props} />}
     >
       <Drawer.Screen
         name="Estoque de Peças"

@@ -1,17 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import {View,Text,TextInput,Button,Alert,Image,TouchableOpacity,Switch,} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Button,
+  Image,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { auth, db } from '../firebaseConfig';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Ionicons } from '@expo/vector-icons';
+
+// --- mapeia códigos do Firebase para mensagens amigáveis ---
+function mapFirebaseAuthError(code?: string): string {
+  switch (code) {
+    case 'auth/invalid-credential':
+    case 'auth/wrong-password':
+    case 'auth/user-not-found':
+      return 'E-mail ou senha inválidos.';
+    case 'auth/invalid-email':
+      return 'E-mail em formato inválido.';
+    case 'auth/user-disabled':
+      return 'Usuário desativado. Entre em contato com o administrador.';
+    case 'auth/too-many-requests':
+      return 'Muitas tentativas. Tente novamente em alguns minutos.';
+    case 'auth/network-request-failed':
+      return 'Falha de rede. Verifique sua conexão e tente novamente.';
+    default:
+      return 'Não foi possível realizar o login. Tente novamente.';
+  }
+}
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [salvarDados, setSalvarDados] = useState(false);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -28,49 +59,51 @@ export default function Login() {
   }, []);
 
   const handleLogin = async () => {
-    console.log('Tentando logar com:', email);
+    // validação simples
+    const emailSan = email.trim().toLowerCase();
+    const senhaSan = senha.trim();
+
+    if (!emailSan || !senhaSan) {
+      Alert.alert('Atenção', 'Informe e-mail e senha.');
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, senha);
-      console.log('Login bem-sucedido:', userCredential);
+      const userCredential = await signInWithEmailAndPassword(auth, emailSan, senhaSan);
 
       const uid = userCredential.user.uid;
-      console.log('UID do usuário:', uid);
-
       const userDoc = await getDoc(doc(db, 'users', uid));
-      console.log('Documento do usuário:', userDoc.exists() ? userDoc.data() : 'Documento não encontrado');
 
       if (!userDoc.exists()) {
-        Alert.alert('Erro', 'Usuário não encontrado na base de dados');
+        Alert.alert('Erro', 'Usuário não encontrado na base de dados.');
         return;
       }
 
       const tipo = String(userDoc.data().tipo || '');
-      console.log('Tipo de usuário:', tipo);
 
       if (salvarDados) {
-        await AsyncStorage.setItem('loginData', JSON.stringify({ email, senha }));
+        await AsyncStorage.setItem('loginData', JSON.stringify({ email: emailSan, senha: senhaSan }));
       } else {
         await AsyncStorage.removeItem('loginData');
       }
 
       if (tipo === 'admin') {
-        console.log('Redirecionando para /admin');
         router.replace('/admin');
       } else if (tipo === 'tecnico') {
-        console.log('Redirecionando para /tecnico');
         router.replace('/tecnico');
       } else {
-        console.warn('Tipo de usuário inválido:', tipo);
-        Alert.alert('Erro', 'Tipo de usuário inválido');
+        Alert.alert('Erro', 'Tipo de usuário inválido.');
       }
-    } catch (error) {
-      console.error('Erro ao tentar logar:', error);
-      if (error instanceof Error) {
-        Alert.alert('Erro ao logar', error.message);
-      } else {
-        Alert.alert('Erro ao logar', 'Erro desconhecido');
-      }
+    } catch (error: any) {
+      // pega code e mostra mensagem amigável
+      const code = error?.code as string | undefined;
+      const friendly = mapFirebaseAuthError(code);
+      Alert.alert('Erro ao logar', friendly);
+      console.log('Login error:', code, error?.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -78,7 +111,7 @@ export default function Login() {
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
       <Image
         source={require('../assets/images/logo.png')}
-        style={{ width: 150, height: 150, marginBottom: 30 }}
+        style={{ width: 350, height: 350, marginBottom: 5 }}
         resizeMode="contain"
       />
       <Text>Email:</Text>
@@ -90,22 +123,45 @@ export default function Login() {
         style={{ borderBottomWidth: 1, marginBottom: 10, width: '100%' }}
       />
       <Text>Senha:</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', borderBottomWidth: 1, marginBottom: 20 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          width: '100%',
+          borderBottomWidth: 1,
+          marginBottom: 20,
+        }}
+      >
         <TextInput
           value={senha}
           onChangeText={setSenha}
           secureTextEntry={!mostrarSenha}
-          style={{ flex: 1 }}
+          style={{ flex: 1, paddingVertical: 8 }}
         />
-        <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)}>
+        <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)} hitSlop={8}>
           <Ionicons name={mostrarSenha ? 'eye-off' : 'eye'} size={24} color="gray" />
         </TouchableOpacity>
       </View>
+
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
         <Switch value={salvarDados} onValueChange={setSalvarDados} />
         <Text style={{ marginLeft: 10 }}>Salvar dados de login</Text>
       </View>
-      <Button title="Entrar" onPress={handleLogin} />
+
+      <View style={{ width: '100%', marginTop: 8 }}>
+        {loading ? (
+          <View style={{ paddingVertical: 12, alignItems: 'center', backgroundColor: '#e9e9e9', borderRadius: 4 }}>
+            <ActivityIndicator />
+          </View>
+        ) : (
+          <Button title="Entrar" onPress={handleLogin} />
+        )}
+        <Image
+        source={require('../assets/images/icon.png')}
+        style={{ width: 100, height: 100, marginBottom:'auto', alignSelf:'center', marginTop:'25' }}
+        resizeMode="contain"
+      />
+      </View>
     </View>
   );
 }
