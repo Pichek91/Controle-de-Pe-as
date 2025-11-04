@@ -1,13 +1,28 @@
+// src/config.ts
 import Constants from 'expo-constants';
 
-type Env = 'dev' | 'prod';
-const extra: any = Constants.expoConfig?.extra ?? {};
-const ENV: Env = (extra.env ?? 'prod') as Env;
+const extra: any =
+  (Constants as any)?.expoConfig ??
+  (Constants as any)?.manifest ??
+  {};
 
-export const API_BASE =
-  ENV === 'dev' ? extra.apiBaseDev : extra.apiBaseProd;
+const ENV: 'prod' | 'dev' = extra?.extra?.env ?? extra?.env ?? 'prod';
+
+// Lê as bases do app.json (extra.apiBaseProd / extra.apiBaseDev)
+// Remove barra final (se houver) para evitar // ao concatenar
+export const API_BASE: string =
+  (ENV === 'prod' ? (extra?.extra?.apiBaseProd ?? extra?.apiBaseProd) : (extra?.extra?.apiBaseDev ?? extra?.apiBaseDev))
+    ?.toString()
+    ?.replace(/\/+$/, '') || '';
 
 export const ENDPOINTS = {
+  // Admin
   pecas: `${API_BASE}/pecas`,
-  health: `${API_BASE}/health`,
+
+  // Técnico
+  estoqueCarro: `${API_BASE}/estoque-carro`,
 };
+
+// (Opcional) helper para normalizar URL de imagem relativa
+export const toAbsUrl = (rel?: string | null) =>
+  !rel ? null : /^https?:\/\//i.test(rel) ? rel : `${API_BASE}${rel.startsWith('/') ? '' : '/'}${rel}`;

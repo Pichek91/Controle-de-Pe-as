@@ -1,102 +1,519 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Image,
+    Modal,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { API_BASE, ENDPOINTS } from '../../../src/config'; // << ajuste o path se necessário
 
-function TwoGears({ size = 56, duration = 1800 }: { size?: number; duration?: number }) {
-  const rotA = useRef(new Animated.Value(0)).current;
-  const rotB = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const loopA = Animated.loop(
-      Animated.timing(rotA, { toValue: 1, duration, useNativeDriver: true })
-    );
-    const loopB = Animated.loop(
-      Animated.timing(rotB, { toValue: 1, duration, useNativeDriver: true })
-    );
-    loopA.start();
-    loopB.start();
-    return () => {
-      loopA.stop();
-      loopB.stop();
-    };
-  }, [duration, rotA, rotB]);
-
-  const spinA = rotA.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
-  const spinB = rotB.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-360deg'] });
-
-  return (
-    <View style={styles.gearsWrap}>
-      {/* Engrenagem maior (esquerda) */}
-      <Animated.Text style={[styles.gear, { fontSize: size, transform: [{ rotate: spinA }] }]}>
-        ⚙️
-      </Animated.Text>
-
-      {/* Engrenagem menor (direita, levemente acima, contra-rotativa) */}
-      <Animated.Text
-        style={[
-          styles.gear,
-          {
-            fontSize: Math.round(size * 0.72),
-            position: 'absolute',
-            left: size * 0.62,
-            top: -size * 0.18,
-            transform: [{ rotate: spinB }],
-          },
-        ]}
-      >
-        ⚙️
-      </Animated.Text>
-    </View>
-  );
-}
+type Peca = {
+  id: string | number;
+  nome?: string;
+  codigo?: string;
+  marca?: string;
+  modelo?: string;
+  quantidade?: number;
+  imagem?: string | null;
+};
 
 export default function EstoqueScreen() {
+  const [pecas, setPecas] = useState<Peca[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // busca e filtros
+  const [search, setSearch] = useState('');
+  const [filterValue, setFilterValue] = useState(''); // valor selecionado
+  const [filterType, setFilterType] = useState<'marca' | 'modelo' | ''>(''); // campo escolhido
+  const [filterPanelOpen, setFilterPanelOpen] = useState(false); // abre/fecha painel
+  const [boxListOpen, setBoxListOpen] = useState(false); // abre/fecha BoxList
+
+  // trata URL da imagem (relativa → absoluta)
+  const getImageUri = (img?: string | null) => {
+    if (!img) return undefined;
+    return img.startsWith('http') ? img : `${API_BASE}${img}`;
+  };
+
+  async function fetchPecas() {
+    try {
+      const response = await axios.get(ENDPOINTS.pecas, { timeout: 10000 });
+      setPecas(response.data ?? []);
+    } catch (error) {
+      console.error('Erro ao buscar peças:', error);
+      Alert.alert('Erro', 'Não foi possível carregar as peças.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchPecas();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchPecas();
+  };
+
+  // opções (memo)
+  const marcas = useMemo(
+    () => Array.from(new Set(pecas.map((p) => p.marca).filter(Boolean))) as string[],
+    [pecas]
+  );
+  const modelos = useMemo(
+    () => Array.from(new Set(pecas.map((p) => p.modelo).filter(Boolean))) as string[],
+    [pecas]
+  );
+
+  // aplica busca + filtro
+  const filteredPecas = useMemo(() => {
+    const s = search.trim().toLowerCase();
+
+    return pecas.filter((p) => {
+      const searchMatch =
+        (p?.nome ?? '').toLowerCase().includes(s) ||
+        (p?.codigo ?? '').toLowerCase().includes(s);
+
+      if (!filterValue) return searchMatch;
+
+      if (filterType === 'marca') return searchMatch && p?.marca === filterValue;
+      if (filterType === 'modelo') return searchMatch && p?.modelo === filterValue;
+
+      return searchMatch;
+    });
+  }, [pecas, search, filterType, filterValue]);
+
+  // item da lista (somente visualização)
+  const renderItem = ({ item }: { item: Peca }) => {
+    const imgUri = getImageUri(item.imagem);
+    return (
+      <View style={styles.card}>
+        {imgUri ? (
+          <Image source={{ uri: imgUri }} style={styles.image} />
+        ) : (
+          <View style={styles.imagePlaceholder}>
+            <Ionicons name="image" size={24} color="#9e9e9e" />
+          </View>
+        )}
+        <View style={{ flex: 1 }}>
+          <Text style={styles.title}>{item.nome}</Text>
+          <Text style={styles.subtitle}>Código: {item.codigo ?? '-'}</Text>
+          <Text style={styles.subtitle}>Marca: {item.marca ?? '-'}</Text>
+        </View>
+        <View style={styles.qtyBox}>
+          <Text style={styles.qtyLabel}>Qtd.</Text>
+          <Text style={styles.qtyValue}>{item.quantidade ?? 0}</Text>
+        </View>
+      </View>
+    );
+  };
+
+  // abre BoxList conforme tipo
+  const openBoxList = () => {
+    if (!filterType) {
+      Alert.alert('Filtro', 'Escolha “Marca” ou “Modelo” antes.');
+      return;
+    }
+    setBoxListOpen(true);
+  };
+
+  const boxOptions = filterType === 'marca' ? marcas : filterType === 'modelo' ? modelos : [];
+
+  if (loading) {
+    return <ActivityIndicator size="large" color="#4CAF50" style={{ marginTop: 50 }} />;
+  }
+
   return (
     <View style={styles.container}>
-      <TwoGears size={56} duration={1800} />
+      {/* Busca + botão de filtro (fixo) */}
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Pesquisar por nome ou código"
+          value={search}
+          onChangeText={setSearch}
+          placeholderTextColor="#080808ff"
+          selectionColor="#4CAF50"
+          cursorColor="#4CAF50"
+          underlineColorAndroid="transparent"
+        />
+        <TouchableOpacity
+          onPress={() => setFilterPanelOpen((prev) => !prev)}
+          accessibilityLabel="Abrir filtros"
+          style={{ padding: 6 }}
+        >
+          <Ionicons
+            name={filterPanelOpen ? 'filter' : 'filter-outline'}
+            size={28}
+            color="#4CAF50"
+          />
+        </TouchableOpacity>
+      </View>
 
-      <Text style={styles.title}>Tela de Estoque</Text>
-      <Text style={styles.subtitle}>Ambiente em desenvolvimento</Text>
-      <Text style={styles.hint}>Obrigado pela compreensão!</Text>
+      {/* Painel de filtros */}
+      {filterPanelOpen && (
+        <View style={styles.filterPanel}>
+          <Text style={styles.filterLabel}>Filtrar por:</Text>
+
+          <View style={styles.filterTypeRow}>
+            <TouchableOpacity
+              style={[styles.pill, filterType === 'marca' && styles.pillActive, { marginRight: 8 }]}
+              onPress={() => setFilterType('marca')}
+            >
+              <Text style={[styles.pillText, filterType === 'marca' && styles.pillTextActive]}>
+                Marca
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.pill, filterType === 'modelo' && styles.pillActive]}
+              onPress={() => setFilterType('modelo')}
+            >
+              <Text style={[styles.pillText, filterType === 'modelo' && styles.pillTextActive]}>
+                Modelo
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.boxListBtn, !filterType && { opacity: 0.5 }]}
+              onPress={openBoxList}
+              disabled={!filterType}
+            >
+              <Ionicons name="chevron-down" size={18} color="#2e7d32" />
+              <Text style={styles.boxListBtnText}>
+                {filterValue ? 'Trocar opção' : 'Escolher opção'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Resumo do filtro ativo */}
+          {(!!filterType || !!filterValue) && (
+            <View style={styles.activeFilter}>
+              <Ionicons name="funnel" size={16} color="#1b5e20" />
+              <Text style={styles.activeFilterText}>
+                {filterType ? (filterType === 'marca' ? 'Marca' : 'Modelo') : 'Filtro'}
+                {filterValue ? `: ${filterValue}` : ''}
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setFilterType('');
+                  setFilterValue('');
+                }}
+              >
+                <Ionicons name="close-circle" size={18} color="#2e7d32" />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Ações */}
+          <View style={styles.actionsRow}>
+            <TouchableOpacity
+              style={[styles.actionBtn, { backgroundColor: '#e0e0e0' }]}
+              onPress={() => {
+                setFilterType('');
+                setFilterValue('');
+                // Mantém o painel aberto para novo filtro
+              }}
+            >
+              <Text style={[styles.actionText, { color: '#333' }]}>Limpar filtro</Text>
+            </TouchableOpacity>
+
+            <View style={{ width: 12 }} />
+
+            <TouchableOpacity
+              style={[styles.actionBtn, { backgroundColor: '#4CAF50' }]}
+              onPress={() => {
+                // Pode fechar o painel se preferir:
+                // setFilterPanelOpen(false);
+              }}
+            >
+              <Text style={[styles.actionText, { color: '#fff' }]}>Aplicar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      <FlatList
+        data={filteredPecas}
+        keyExtractor={(item) => String(item.id)}
+        renderItem={renderItem}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        ListEmptyComponent={
+          <View style={{ alignItems: 'center', marginTop: 40 }}>
+            <Text style={{ color: '#777' }}>Nenhuma peça encontrada.</Text>
+          </View>
+        }
+        contentContainerStyle={{ paddingBottom: 16 }}
+      />
+
+      {/* -------- BoxList (Modal) para escolher a opção do filtro -------- */}
+      <Modal
+        visible={boxListOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setBoxListOpen(false)}
+      >
+        <View style={styles.modalRoot}>
+          <Pressable style={styles.modalOverlay} onPress={() => setBoxListOpen(false)} />
+
+          <View style={styles.boxListContainer}>
+            <View style={styles.boxListHeader}>
+              <Text style={styles.boxListTitle}>
+                {filterType === 'marca'
+                  ? 'Escolher Marca'
+                  : filterType === 'modelo'
+                  ? 'Escolher Modelo'
+                  : 'Escolha um filtro'}
+              </Text>
+              <TouchableOpacity onPress={() => setBoxListOpen(false)}>
+                <Ionicons name="close" size={22} color="#333" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ maxHeight: 360 }}>
+              <FlatList
+                data={boxOptions}
+                keyExtractor={(v) => v}
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
+                renderItem={({ item }) => {
+                  const selected = item === filterValue;
+                  return (
+                    <TouchableOpacity
+                      style={[styles.optionRow, selected && styles.optionRowSelected]}
+                      onPress={() => {
+                        setFilterValue(item);
+                        setBoxListOpen(false);
+                      }}
+                    >
+                      <Text
+                        style={[styles.optionRowText, selected && styles.optionRowTextSelected]}
+                      >
+                        {item}
+                      </Text>
+                      {selected && <Ionicons name="checkmark" size={18} color="#2e7d32" />}
+                    </TouchableOpacity>
+                  );
+                }}
+                ListEmptyComponent={
+                  <View style={{ paddingVertical: 24, alignItems: 'center' }}>
+                    <Text style={{ color: '#777' }}>
+                      {filterType ? 'Sem opções disponíveis.' : 'Escolha Marca ou Modelo.'}
+                    </Text>
+                  </View>
+                }
+              />
+            </View>
+
+            <TouchableOpacity style={styles.boxListFooterBtn} onPress={() => setBoxListOpen(false)}>
+              <Text style={styles.boxListFooterText}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      {/* ----------------------------------------------------------------- */}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 24,
+  container: { flex: 1, padding: 10 },
+
+  // busca
+  searchContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#16200bff',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: 10,
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
   },
-  gearsWrap: {
+  searchInput: { flex: 1, padding: 10 },
+
+  // painel de filtro
+  filterPanel: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+    backgroundColor: '#fff',
+  },
+  filterLabel: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 6 },
+  filterTypeRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    width: 200,
-    height: 140,
+    marginBottom: 8,
   },
-  gear: {
-    includeFontPadding: false,
-    textAlignVertical: 'center',
+  pill: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#c8e6c9',
+    backgroundColor: '#f1f8e9',
   },
-  title: {
-    marginTop: 10,
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#E6EDF7',
-    textAlign: 'center',
+  pillActive: { backgroundColor: '#e8f5e9', borderColor: '#4CAF50' },
+  pillText: { color: '#2e7d32', fontWeight: '600' },
+  pillTextActive: { color: '#1b5e20' },
+
+  // botão que abre a BoxList (fica à direita)
+  boxListBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#c8e6c9',
+    backgroundColor: '#f1f8e9',
+    marginLeft: 'auto', // empurra para a direita
   },
-  subtitle: {
-    marginTop: 6,
-    fontSize: 16,
-    color: '#C8D4E6',
-    textAlign: 'center',
+  boxListBtnText: {
+    marginLeft: 6,
+    color: '#2e7d32',
     fontWeight: '600',
   },
-  hint: {
-    marginTop: 4,
-    fontSize: 13,
-    color: '#9FB0C7',
-    textAlign: 'center',
+
+  // resumo do filtro ativo
+  activeFilter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f1f8e9',
+    borderColor: '#c8e6c9',
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+    marginTop: 6,
+    marginBottom: 8,
   },
+  activeFilterText: { color: '#1b5e20', fontWeight: '600', marginHorizontal: 6 },
+
+  // ações
+  actionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 6,
+  },
+  actionBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  actionText: { fontWeight: '700' },
+
+  // cards
+  card: {
+    flexDirection: 'row',
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    marginBottom: 10,
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  image: {
+    width: 72,
+    height: 72,
+    marginRight: 10,
+    borderRadius: 8,
+    backgroundColor: '#f2f2f2',
+  },
+  imagePlaceholder: {
+    width: 72,
+    height: 72,
+    marginRight: 10,
+    borderRadius: 8,
+    backgroundColor: '#f2f2f2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: { fontSize: 16, fontWeight: 'bold' },
+  subtitle: { fontSize: 14, color: '#555' },
+
+  // quantidade
+  qtyBox: {
+    minWidth: 64,
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: '#e8f5e9',
+    borderWidth: 1,
+    borderColor: '#c8e6c9',
+    marginLeft: 8,
+  },
+  qtyLabel: { fontSize: 12, color: '#2e7d32' },
+  qtyValue: { fontSize: 18, fontWeight: '700', color: '#2e7d32' },
+
+  // Modal / BoxList
+  modalRoot: {
+    flex: 1,
+    justifyContent: 'flex-start',
+  },
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  boxListContainer: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    top: '20%',
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    padding: 12,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
+  },
+  boxListHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  boxListTitle: { fontSize: 16, fontWeight: '700', color: '#222' },
+  optionRow: {
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  optionRowSelected: {
+    backgroundColor: '#e8f5e9',
+  },
+  optionRowText: { fontSize: 15, color: '#333' },
+  optionRowTextSelected: { color: '#1b5e20', fontWeight: '700' },
+  separator: { height: StyleSheet.hairlineWidth, backgroundColor: '#eee' },
+  boxListFooterBtn: {
+    marginTop: 10,
+    alignSelf: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    backgroundColor: '#f1f1f1',
+    borderRadius: 8,
+  },
+  boxListFooterText: { fontWeight: '600', color: '#333' },
 });

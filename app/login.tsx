@@ -158,7 +158,7 @@ export default function Login() {
         )}
         <Image
         source={require('../assets/images/icon.png')}
-        style={{ width: 100, height: 100, marginBottom:'auto', alignSelf:'center', marginTop:'25' }}
+        style={{ width: 100, height: 100, marginBottom:20, alignSelf:'center', marginTop:30 }}
         resizeMode="contain"
       />
       </View>

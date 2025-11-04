@@ -2,19 +2,25 @@
   "expo": {
     "name": "Grancoffee Peças",
     "slug": "controle-pecas",
-    "version": "1.0.5",
+    "version": "1.0.7",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "controlepecas",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Precisamos acessar a câmera para fotografar as peças.",
+        "NSPhotoLibraryUsageDescription": "Precisamos acessar sua galeria para selecionar imagens das peças.",
+        "NSPhotoLibraryAddUsageDescription": "Precisamos salvar imagens no seu dispositivo."
+      }
     },
     "android": {
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.pichek91.controlepecas"
+      "package": "com.pichek91.controlepecas",
+      "permissions": ["CAMERA"]
     },
     "web": {
       "output": "static",
