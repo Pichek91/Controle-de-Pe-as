@@ -2,19 +2,22 @@ import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Image,
-    Modal,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Image,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { API_BASE, ENDPOINTS } from '../../../src/config'; // << ajuste o path se necessário
+
+// === NOVO === pegar email/uid do técnico logado
+import { useAuthUser } from '../../../src/hooks/useAuthUser';
 
 type Peca = {
   id: string | number;
@@ -38,9 +41,20 @@ export default function EstoqueScreen() {
   const [filterPanelOpen, setFilterPanelOpen] = useState(false); // abre/fecha painel
   const [boxListOpen, setBoxListOpen] = useState(false); // abre/fecha BoxList
 
+  // === NOVO === estado do modal de solicitação
+  const [solicitarOpen, setSolicitarOpen] = useState(false);
+  const [pecaSelecionada, setPecaSelecionada] = useState<Peca | null>(null);
+  const [qtySolicitar, setQtySolicitar] = useState<number>(1);
+  const [sending, setSending] = useState(false);
+
+  // === NOVO === usuário logado
+  const { user } = useAuthUser();
+  const technicianEmail = user?.email ?? 'tecnico@sem-email';
+  const technicianUid = (user as any)?.uid ?? (user as any)?.id ?? null;
+
   // trata URL da imagem (relativa → absoluta)
   const getImageUri = (img?: string | null) => {
-    if (!img) return undefined;
+    if (!img) return undefined as unknown as string;
     return img.startsWith('http') ? img : `${API_BASE}${img}`;
   };
 
@@ -79,26 +93,34 @@ export default function EstoqueScreen() {
   // aplica busca + filtro
   const filteredPecas = useMemo(() => {
     const s = search.trim().toLowerCase();
-
     return pecas.filter((p) => {
       const searchMatch =
         (p?.nome ?? '').toLowerCase().includes(s) ||
         (p?.codigo ?? '').toLowerCase().includes(s);
-
       if (!filterValue) return searchMatch;
-
       if (filterType === 'marca') return searchMatch && p?.marca === filterValue;
       if (filterType === 'modelo') return searchMatch && p?.modelo === filterValue;
-
       return searchMatch;
     });
   }, [pecas, search, filterType, filterValue]);
 
-  // item da lista (somente visualização)
+  // === NOVO === abrir modal de solicitação ao tocar numa peça (se tiver estoque)
+  const onPressPeca = (item: Peca) => {
+    const estoque = Number(item.quantidade || 0);
+    if (estoque <= 0) {
+      Alert.alert('Sem estoque', 'Esta peça está sem saldo no estoque geral.');
+      return;
+    }
+    setPecaSelecionada(item);
+    setQtySolicitar(1);
+    setSolicitarOpen(true);
+  };
+
+  // item da lista (somente visualização + clique para solicitar)
   const renderItem = ({ item }: { item: Peca }) => {
     const imgUri = getImageUri(item.imagem);
     return (
-      <View style={styles.card}>
+      <TouchableOpacity style={styles.card} onPress={() => onPressPeca(item)}>
         {imgUri ? (
           <Image source={{ uri: imgUri }} style={styles.image} />
         ) : (
@@ -115,7 +137,7 @@ export default function EstoqueScreen() {
           <Text style={styles.qtyLabel}>Qtd.</Text>
           <Text style={styles.qtyValue}>{item.quantidade ?? 0}</Text>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -128,7 +150,73 @@ export default function EstoqueScreen() {
     setBoxListOpen(true);
   };
 
-  const boxOptions = filterType === 'marca' ? marcas : filterType === 'modelo' ? modelos : [];
+  const boxOptions =
+    filterType === 'marca' ? marcas : filterType === 'modelo' ? modelos : [];
+
+  // === NOVO === enviar solicitação de separação
+  const solicitarSeparacao = async () => {
+    if (!pecaSelecionada?.id) return;
+    const estoque = Number(pecaSelecionada.quantidade || 0);
+    const qty = Number(qtySolicitar || 0);
+
+    if (qty <= 0) {
+      Alert.alert('Quantidade inválida', 'Escolha pelo menos 1 unidade.');
+      return;
+    }
+    if (qty > estoque) {
+      Alert.alert('Quantidade indisponível', `Máximo disponível: ${estoque}.`);
+      return;
+    }
+
+    try {
+      setSending(true);
+
+      // 1) Cria a solicitação no backend (e baixa do estoque geral)
+      //    Exemplo de contrato:
+      //    POST /separation-requests
+      //    body: { partId, qty, technicianEmail, technicianUid? }
+      const { data } = await axios.post(
+        `${API_BASE}/separation-requests`,
+        {
+          partId: pecaSelecionada.id,
+          qty,
+          technicianEmail,
+          technicianUid, // opcional: facilita rastreio
+        },
+        { timeout: 15000 }
+      );
+
+      // 2) (Opcional) cria notificação para os admins responsáveis pela separação
+      //    Você pode ter um "userUid" de admin, um grupo, ou deixar o backend decidir.
+      // await axios.post(`${API_BASE}/notifications`, {
+      //   userUid: 'ADMIN_UID_OU_GRUPO',
+      //   title: 'Nova solicitação de separação',
+      //   body: `${technicianEmail} solicitou ${qty}x ${pecaSelecionada.nome} (${pecaSelecionada.codigo})`,
+      //   type: 'separation_request',
+      //   payload: { partId: String(pecaSelecionada.id), qty, technicianEmail },
+      // }, { timeout: 10000 });
+
+      // 3) Feedback e atualização
+      Alert.alert(
+        'Solicitado',
+        'Pedido enviado para separação. Aguarde o administrador preparar a peça.'
+      );
+      setSolicitarOpen(false);
+      setPecaSelecionada(null);
+      setQtySolicitar(1);
+
+      // Recarrega a lista para refletir a baixa do estoque geral
+      await fetchPecas();
+    } catch (err: any) {
+      console.log('ERRO solicitar separação =>', err?.response?.status, err?.response?.data);
+      const msg =
+        err?.response?.data?.error ||
+        'Não foi possível enviar a solicitação. Tente novamente.';
+      Alert.alert('Erro', msg);
+    } finally {
+      setSending(false);
+    }
+  };
 
   if (loading) {
     return <ActivityIndicator size="large" color="#4CAF50" style={{ marginTop: 50 }} />;
@@ -165,7 +253,6 @@ export default function EstoqueScreen() {
       {filterPanelOpen && (
         <View style={styles.filterPanel}>
           <Text style={styles.filterLabel}>Filtrar por:</Text>
-
           <View style={styles.filterTypeRow}>
             <TouchableOpacity
               style={[styles.pill, filterType === 'marca' && styles.pillActive, { marginRight: 8 }]}
@@ -198,7 +285,7 @@ export default function EstoqueScreen() {
           </View>
 
           {/* Resumo do filtro ativo */}
-          {(!!filterType || !!filterValue) && (
+          {!!(!!filterType && !!filterValue) && (
             <View style={styles.activeFilter}>
               <Ionicons name="funnel" size={16} color="#1b5e20" />
               <Text style={styles.activeFilterText}>
@@ -228,9 +315,7 @@ export default function EstoqueScreen() {
             >
               <Text style={[styles.actionText, { color: '#333' }]}>Limpar filtro</Text>
             </TouchableOpacity>
-
             <View style={{ width: 12 }} />
-
             <TouchableOpacity
               style={[styles.actionBtn, { backgroundColor: '#4CAF50' }]}
               onPress={() => {
@@ -258,7 +343,7 @@ export default function EstoqueScreen() {
         contentContainerStyle={{ paddingBottom: 16 }}
       />
 
-      {/* -------- BoxList (Modal) para escolher a opção do filtro -------- */}
+      {/* --- BoxList (Modal) para escolher a opção do filtro --- */}
       <Modal
         visible={boxListOpen}
         transparent
@@ -267,7 +352,6 @@ export default function EstoqueScreen() {
       >
         <View style={styles.modalRoot}>
           <Pressable style={styles.modalOverlay} onPress={() => setBoxListOpen(false)} />
-
           <View style={styles.boxListContainer}>
             <View style={styles.boxListHeader}>
               <Text style={styles.boxListTitle}>
@@ -322,14 +406,112 @@ export default function EstoqueScreen() {
           </View>
         </View>
       </Modal>
-      {/* ----------------------------------------------------------------- */}
+
+      {/* === NOVO === Modal de solicitação de separação */}
+      <Modal
+        visible={solicitarOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSolicitarOpen(false)}
+      >
+        <View style={styles.modalRoot}>
+          <Pressable style={styles.modalOverlay} onPress={() => setSolicitarOpen(false)} />
+          <View style={styles.boxListContainer}>
+            <View style={styles.boxListHeader}>
+              <Text style={styles.boxListTitle}>Solicitar separação</Text>
+              <TouchableOpacity onPress={() => setSolicitarOpen(false)}>
+                <Ionicons name="close" size={22} color="#333" />
+              </TouchableOpacity>
+            </View>
+
+            {!!pecaSelecionada && (
+              <View style={{ gap: 8, marginBottom: 8 }}>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: '#222' }}>
+                  {pecaSelecionada.nome}
+                </Text>
+                <Text style={{ color: '#555' }}>
+                  Código: {pecaSelecionada.codigo ?? '-'} • Marca: {pecaSelecionada.marca ?? '-'}
+                </Text>
+                <Text style={{ color: '#1b5e20', fontWeight: '700' }}>
+                  Disponível: {Number(pecaSelecionada.quantidade || 0)}
+                </Text>
+              </View>
+            )}
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <Text style={{ fontWeight: '600', marginRight: 8 }}>Quantidade:</Text>
+              <TouchableOpacity
+                onPress={() => setQtySolicitar((q) => Math.max(1, q - 1))}
+                style={{
+                  padding: 8,
+                  borderWidth: 1,
+                  borderColor: '#c8e6c9',
+                  borderRadius: 8,
+                  backgroundColor: '#f1f8e9',
+                  marginRight: 8,
+                }}
+              >
+                <Ionicons name="remove" size={16} color="#2e7d32" />
+              </TouchableOpacity>
+              <TextInput
+                style={{
+                  width: 64,
+                  textAlign: 'center',
+                  borderWidth: 1,
+                  borderColor: '#ddd',
+                  borderRadius: 8,
+                  paddingVertical: 6,
+                }}
+                keyboardType="number-pad"
+                value={String(qtySolicitar)}
+                onChangeText={(t) => {
+                  const n = Number(t.replace(/\D/g, '')) || 0;
+                  setQtySolicitar(n);
+                }}
+              />
+              <TouchableOpacity
+                onPress={() =>
+                  setQtySolicitar((q) =>
+                    Math.min(Number(pecaSelecionada?.quantidade || 0), (q || 0) + 1)
+                  )
+                }
+                style={{
+                  padding: 8,
+                  borderWidth: 1,
+                  borderColor: '#c8e6c9',
+                  borderRadius: 8,
+                  backgroundColor: '#f1f8e9',
+                  marginLeft: 8,
+                }}
+              >
+                <Ionicons name="add" size={16} color="#2e7d32" />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={{
+                backgroundColor: sending ? '#9CCC65' : '#4CAF50',
+                paddingVertical: 12,
+                alignItems: 'center',
+                borderRadius: 8,
+              }}
+              onPress={solicitarSeparacao}
+              disabled={sending}
+            >
+              <Text style={{ color: '#fff', fontWeight: '700' }}>
+                {sending ? 'Enviando...' : 'Solicitar separação'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      {/* === FIM modal solicitação === */}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 10 },
-
   // busca
   searchContainer: {
     flexDirection: 'row',
@@ -343,7 +525,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   searchInput: { flex: 1, padding: 10 },
-
   // painel de filtro
   filterPanel: {
     borderWidth: 1,
@@ -370,7 +551,6 @@ const styles = StyleSheet.create({
   pillActive: { backgroundColor: '#e8f5e9', borderColor: '#4CAF50' },
   pillText: { color: '#2e7d32', fontWeight: '600' },
   pillTextActive: { color: '#1b5e20' },
-
   // botão que abre a BoxList (fica à direita)
   boxListBtn: {
     flexDirection: 'row',
@@ -388,7 +568,6 @@ const styles = StyleSheet.create({
     color: '#2e7d32',
     fontWeight: '600',
   },
-
   // resumo do filtro ativo
   activeFilter: {
     flexDirection: 'row',
@@ -404,7 +583,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   activeFilterText: { color: '#1b5e20', fontWeight: '600', marginHorizontal: 6 },
-
   // ações
   actionsRow: {
     flexDirection: 'row',
@@ -418,7 +596,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   actionText: { fontWeight: '700' },
-
   // cards
   card: {
     flexDirection: 'row',
@@ -448,7 +625,6 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 16, fontWeight: 'bold' },
   subtitle: { fontSize: 14, color: '#555' },
-
   // quantidade
   qtyBox: {
     minWidth: 64,
@@ -463,7 +639,6 @@ const styles = StyleSheet.create({
   },
   qtyLabel: { fontSize: 12, color: '#2e7d32' },
   qtyValue: { fontSize: 18, fontWeight: '700', color: '#2e7d32' },
-
   // Modal / BoxList
   modalRoot: {
     flex: 1,
