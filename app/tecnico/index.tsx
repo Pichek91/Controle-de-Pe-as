@@ -1,11 +1,16 @@
+// app/tecnico/index.tsx
 import React from 'react';
+import 'react-native-gesture-handler'; // <-- DEVE vir antes de tudo
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AdminDrawer from './AdminDrawer';
 
 export default function AdminIndex() {
-  return <AdminDrawer />;
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AdminDrawer />
+    </GestureHandlerRootView>
+  );
 }
 
-// Oculta o cabeçalho padrão do Expo Router
-AdminIndex.options = {
-  headerShown: false,
-};
+// Se você ainda usa isso, pode manter
+AdminIndex.options = { headerShown: false };

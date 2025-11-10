@@ -1,9 +1,10 @@
-// CustomDrawerContent.tsx — sem o item de “Notificações”
+// CustomDrawerContent.tsx
 import {
   DrawerContentComponentProps,
   DrawerContentScrollView,
   DrawerItemList,
 } from '@react-navigation/drawer';
+import Constants from 'expo-constants';
 import React from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +16,15 @@ export default function CustomDrawerContent(props: CustomProps) {
   const { user } = useAuthUser();
   const email = user?.email ?? 'Usuário';
   const insets = useSafeAreaInsets();
+
+  // Versões possíveis
+  const appVersion =
+    Constants.expoConfig?.version ??
+    Constants.manifest2?.extra?.expoClient?.version ?? // fallback
+    '0.0.0';
+
+  const buildNumber =
+    (Constants.nativeBuildVersion as string | undefined) ?? '';
 
   return (
     <View style={styles.wrapper}>
@@ -28,7 +38,17 @@ export default function CustomDrawerContent(props: CustomProps) {
 
       <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         <Text numberOfLines={1} style={styles.email}>{email}</Text>
-        <Image source={require('../assets/images/icon.png')} style={styles.footerImage} resizeMode="contain" />
+
+        <Image
+          source={require('../assets/images/icon.png')}
+          style={styles.footerImage}
+          resizeMode="contain"
+        />
+
+        {/* Versão do app */}
+        <Text style={styles.versionText}>
+          v{appVersion}{buildNumber ? ` (${buildNumber})` : ''}
+        </Text>
       </View>
     </View>
   );
@@ -46,4 +66,10 @@ const styles = StyleSheet.create({
   },
   email: { fontSize: 14, fontWeight: '600', color: '#111', marginBottom: 8 },
   footerImage: { width: '100%', height: 60, opacity: 0.95 },
+  versionText: {
+    marginTop: 8,
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+  },
 });

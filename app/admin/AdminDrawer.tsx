@@ -10,6 +10,7 @@ import CadastrarScreen from './screens/CadastrarScreen';
 import EstoqueScreen from './screens/EstoqueScreen';
 import LogoutScreen from './screens/LogoutScreen';
 import PecasReconScreen from './screens/PecasReconScreen';
+import PedidoScreen from './screens/PedidoScreen';
 import RecebimentosScreen from './screens/RecebimentosScreen';
 import ReconScreen from './screens/ReconScreen';
 import SeparacaoScreen from './screens/SeparacaoScreen';
@@ -153,6 +154,16 @@ export default function AdminDrawer() {
         options={({ navigation }) => ({
           headerTitle: 'Peças para Recon',
           drawerIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} />,
+          headerRight: () => <HeaderBell count={unreadCount} onPress={() => navigation.navigate('Notificações')} />,
+        })}
+
+      />
+      <Drawer.Screen
+        name="Pedido de Peças"
+        component={PedidoScreen}
+        options={({ navigation }) => ({
+          headerTitle: 'Pedido de Peças',
+          drawerIcon: ({ color, size }) => <Ionicons name="clipboard" size={size} color={color} />,
           headerRight: () => <HeaderBell count={unreadCount} onPress={() => navigation.navigate('Notificações')} />,
         })}
       />
