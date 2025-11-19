@@ -26,3 +26,21 @@ export const ENDPOINTS = {
 // (Opcional) helper para normalizar URL de imagem relativa
 export const toAbsUrl = (rel?: string | null) =>
   !rel ? null : /^https?:\/\//i.test(rel) ? rel : `${API_BASE}${rel.startsWith('/') ? '' : '/'}${rel}`;
+
+// --- ADICIONAR AO FINAL DE src/config.ts ---
+
+// Endpoints de treinamentos (mantém ENDPOINTS existente intacto)
+export const TRAINING_ENDPOINTS = {
+  base: `${API_BASE}/trainings`,                         // GET/POST /trainings
+  byId: (id: number) => `${API_BASE}/trainings/${id}`,   // PUT/DELETE /trainings/:id
+  full: (id: number) => `${API_BASE}/trainings/${id}/full`,
+  available: `${API_BASE}/trainings/available`,
+  questions: (trainingId: number) => `${API_BASE}/trainings/${trainingId}/questions`,
+  question: (questionId: number) => `${API_BASE}/training-questions/${questionId}`,
+  options: (questionId: number) => `${API_BASE}/training-questions/${questionId}/options`,
+  option: (optionId: number) => `${API_BASE}/training-options/${optionId}`,
+  start: (trainingId: number) => `${API_BASE}/trainings/${trainingId}/start`,
+  submit: (attemptId: number) => `${API_BASE}/training-attempts/${attemptId}/submit`,
+  attempts: (trainingId: number) => `${API_BASE}/trainings/${trainingId}/attempts`,
+  exportCsv: `${API_BASE}/trainings/export`,
+};

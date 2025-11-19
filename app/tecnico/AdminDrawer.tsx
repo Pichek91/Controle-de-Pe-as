@@ -16,6 +16,8 @@ import RetiradasScreen from './screens/RetiradasScreen';
 // ✅ importe a tela de notificações
 import { useNotificationsBadge } from '../../src/hooks/useNotificationsBadge';
 import NotificacoesTecnicoScreen from './notificacoes';
+import DevolucaoScreen from './screens/DevolucaoScreen';
+import TreinamentoScreen from './screens/TreinamentoScreen';
 
 const Drawer = createDrawerNavigator();
 
@@ -115,6 +117,19 @@ export default function AdminDrawer() {
           ),
         }}
       />
+
+            <Drawer.Screen
+        name="devolucao"
+        component={DevolucaoScreen}
+        options={{
+          title: 'Peças para Devolução',
+          headerTitle: 'Devoluções',
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="clipboard-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      
       {/* ✅ Screen OCULTA para Notificações (não aparece no menu) */}
       <Drawer.Screen
         name="notificacoes"
@@ -126,6 +141,18 @@ export default function AdminDrawer() {
           drawerIcon: () => null,
         }}
       />
+            <Drawer.Screen
+        name="Treinamento"
+        component={TreinamentoScreen}
+        options={{
+          title: 'Treinamentos',
+          headerTitle: 'Treinamentos',
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="today" size={size} color={color} />
+          ),
+        }}
+      />
+
       <Drawer.Screen
         name="logout"
         component={LogoutScreen}

@@ -18,6 +18,7 @@ import SeparacaoScreen from './screens/SeparacaoScreen';
 import NotificacoesScreen from './screens/NotificacoesScreen';
 
 import { API_BASE } from '../../src/config';
+import TreinamentoScreen from './screens/TreinamentoScreen';
 
 const Drawer = createDrawerNavigator();
 const ADMIN_UID = 'ADMIN'; // mesmo valor do .env (ADMIN_UID)
@@ -164,6 +165,15 @@ export default function AdminDrawer() {
         options={({ navigation }) => ({
           headerTitle: 'Pedido de Peças',
           drawerIcon: ({ color, size }) => <Ionicons name="clipboard" size={size} color={color} />,
+          headerRight: () => <HeaderBell count={unreadCount} onPress={() => navigation.navigate('Notificações')} />,
+        })}
+      />
+      <Drawer.Screen
+        name="Treinamentos"
+        component={TreinamentoScreen}
+        options={({ navigation }) => ({
+          headerTitle: 'Treinamentos',
+          drawerIcon: ({ color, size }) => <Ionicons name="today" size={size} color={color} />,
           headerRight: () => <HeaderBell count={unreadCount} onPress={() => navigation.navigate('Notificações')} />,
         })}
       />
