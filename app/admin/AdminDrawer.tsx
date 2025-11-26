@@ -1,10 +1,10 @@
 // AdminDrawer.tsx — apenas sininho no header; Notificações ocultas no Drawer
 import { Ionicons } from '@expo/vector-icons';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import axios from 'axios';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
 import CustomDrawerContent from '../../components/CustomDrawerContent';
 import CadastrarScreen from './screens/CadastrarScreen';
 import EstoqueScreen from './screens/EstoqueScreen';
@@ -18,6 +18,7 @@ import SeparacaoScreen from './screens/SeparacaoScreen';
 import NotificacoesScreen from './screens/NotificacoesScreen';
 
 import { API_BASE } from '../../src/config';
+import CadastroUsuario from './screens/CadastroUsuario';
 import TreinamentoScreen from './screens/TreinamentoScreen';
 
 const Drawer = createDrawerNavigator();
@@ -174,6 +175,16 @@ export default function AdminDrawer() {
         options={({ navigation }) => ({
           headerTitle: 'Treinamentos',
           drawerIcon: ({ color, size }) => <Ionicons name="today" size={size} color={color} />,
+          headerRight: () => <HeaderBell count={unreadCount} onPress={() => navigation.navigate('Notificações')} />,
+        })}
+      />
+
+      <Drawer.Screen
+        name="Usuarios"
+        component={CadastroUsuario}
+        options={({ navigation }) => ({
+          headerTitle: 'Usuarios',
+          drawerIcon: ({ color, size }) => <FontAwesome5 name="users-cog" size={24} color="black" />,
           headerRight: () => <HeaderBell count={unreadCount} onPress={() => navigation.navigate('Notificações')} />,
         })}
       />

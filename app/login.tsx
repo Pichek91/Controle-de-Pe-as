@@ -1,3 +1,4 @@
+
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
@@ -59,7 +60,6 @@ export default function Login() {
   }, []);
 
   const handleLogin = async () => {
-    // validação simples
     const emailSan = email.trim().toLowerCase();
     const senhaSan = senha.trim();
 
@@ -81,7 +81,9 @@ export default function Login() {
         return;
       }
 
-      const tipo = String(userDoc.data().tipo || '');
+      // ✅ Compatibilidade: busca tipo ou role
+      const userData = userDoc.data();
+      const tipo = String(userData.tipo || userData.role || '');
 
       if (salvarDados) {
         await AsyncStorage.setItem('loginData', JSON.stringify({ email: emailSan, senha: senhaSan }));
@@ -97,7 +99,6 @@ export default function Login() {
         Alert.alert('Erro', 'Tipo de usuário inválido.');
       }
     } catch (error: any) {
-      // pega code e mostra mensagem amigável
       const code = error?.code as string | undefined;
       const friendly = mapFirebaseAuthError(code);
       Alert.alert('Erro ao logar', friendly);
@@ -157,10 +158,10 @@ export default function Login() {
           <Button title="Entrar" onPress={handleLogin} />
         )}
         <Image
-        source={require('../assets/images/icon.png')}
-        style={{ width: 100, height: 100, marginBottom:20, alignSelf:'center', marginTop:30 }}
-        resizeMode="contain"
-      />
+          source={require('../assets/images/icon.png')}
+          style={{ width: 100, height: 100, marginBottom: 20, alignSelf: 'center', marginTop: 30 }}
+          resizeMode="contain"
+        />
       </View>
     </View>
   );
