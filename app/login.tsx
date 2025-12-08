@@ -8,13 +8,13 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Button,
   Image,
+  StyleSheet,
   Switch,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { auth, db } from '../firebaseConfig';
 
@@ -81,7 +81,6 @@ export default function Login() {
         return;
       }
 
-      // ✅ Compatibilidade: busca tipo ou role
       const userData = userDoc.data();
       const tipo = String(userData.tipo || userData.role || '');
 
@@ -109,60 +108,143 @@ export default function Login() {
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+    <View style={styles.container}>
       <Image
-        source={require('../assets/images/logo.png')}
-        style={{ width: 350, height: 350, marginBottom: 5 }}
+        source={require('../assets/images/icon.png')}
+        style={styles.logo}
         resizeMode="contain"
       />
-      <Text>Email:</Text>
+      <Text style={styles.label}>Email</Text>
       <TextInput
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
         keyboardType="email-address"
-        style={{ borderBottomWidth: 1, marginBottom: 10, width: '100%' }}
+        style={styles.input}
+        placeholder="Digite seu e-mail"
+        placeholderTextColor="#aaa"
       />
-      <Text>Senha:</Text>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          width: '100%',
-          borderBottomWidth: 1,
-          marginBottom: 20,
-        }}
-      >
+      <Text style={styles.label}>Senha</Text>
+      <View style={styles.passwordContainer}>
         <TextInput
           value={senha}
           onChangeText={setSenha}
           secureTextEntry={!mostrarSenha}
-          style={{ flex: 1, paddingVertical: 8 }}
+          style={styles.passwordInput}
+          placeholder="Digite sua senha"
+          placeholderTextColor="#aaa"
         />
         <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)} hitSlop={8}>
-          <Ionicons name={mostrarSenha ? 'eye-off' : 'eye'} size={24} color="gray" />
+          <Ionicons name={mostrarSenha ? 'eye-off' : 'eye'} size={24} color="#555" />
         </TouchableOpacity>
       </View>
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
+      <View style={styles.switchContainer}>
         <Switch value={salvarDados} onValueChange={setSalvarDados} />
-        <Text style={{ marginLeft: 10 }}>Salvar dados de login</Text>
+        <Text style={styles.switchText}>Salvar dados de login</Text>
       </View>
 
-      <View style={{ width: '100%', marginTop: 8 }}>
+      <View style={styles.buttonContainer}>
         {loading ? (
-          <View style={{ paddingVertical: 12, alignItems: 'center', backgroundColor: '#e9e9e9', borderRadius: 4 }}>
-            <ActivityIndicator />
+          <View style={styles.loadingButton}>
+            <ActivityIndicator color="#007bff" />
           </View>
         ) : (
-          <Button title="Entrar" onPress={handleLogin} />
+          <TouchableOpacity style={styles.button} onPress={handleLogin}>
+            <Text style={styles.buttonText}>Entrar</Text>
+          </TouchableOpacity>
         )}
-        <Image
-          source={require('../assets/images/icon.png')}
-          style={{ width: 100, height: 100, marginBottom: 20, alignSelf: 'center', marginTop: 30 }}
-          resizeMode="contain"
-        />
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#f0f2f5', // fundo moderno claro
+  },
+
+logo: {
+  width: 250,
+  height: 250,
+  marginBottom: 20,
+  backgroundColor: '#fff', // harmoniza com recorte branco
+  borderRadius: 16,
+  padding: 10,
+  // Sombra para iOS
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.2,
+  shadowRadius: 20,
+  // Sombra para Android
+  elevation: 20,
+},
+
+  label: {
+    alignSelf: 'flex-start',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 6,
+    color: '#333',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 16,
+    width: '100%',
+    backgroundColor: '#fff',
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 20,
+    width: '100%',
+    backgroundColor: '#fff',
+  },
+  passwordInput: {
+    flex: 1,
+    paddingVertical: 10,
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    alignSelf: 'flex-start',
+  },
+  switchText: {
+    marginLeft: 10,
+    color: '#333',
+  },
+  buttonContainer: {
+    width: '100%',
+    marginTop: 8,
+  },
+  button: {
+    backgroundColor: '#56a2f3ff',
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  loadingButton: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    backgroundColor: '#e9e9e9',
+    borderRadius: 8,
+  },
+});

@@ -1,5 +1,6 @@
 // AdminDrawer.tsx — apenas sininho no header; Notificações ocultas no Drawer
 import { Ionicons } from '@expo/vector-icons';
+import AntDesign from '@expo/vector-icons/AntDesign';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import axios from 'axios';
@@ -8,6 +9,7 @@ import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native
 import CustomDrawerContent from '../../components/CustomDrawerContent';
 import CadastrarScreen from './screens/CadastrarScreen';
 import EstoqueScreen from './screens/EstoqueScreen';
+import EstoqueTecScreen from './screens/EstoqueTecScreen';
 import LogoutScreen from './screens/LogoutScreen';
 import PecasReconScreen from './screens/PecasReconScreen';
 import PedidoScreen from './screens/PedidoScreen';
@@ -175,6 +177,16 @@ export default function AdminDrawer() {
         options={({ navigation }) => ({
           headerTitle: 'Treinamentos',
           drawerIcon: ({ color, size }) => <Ionicons name="today" size={size} color={color} />,
+          headerRight: () => <HeaderBell count={unreadCount} onPress={() => navigation.navigate('Notificações')} />,
+        })}
+      />
+
+            <Drawer.Screen
+        name="EstoqueTec"
+        component={EstoqueTecScreen}
+        options={({ navigation }) => ({
+          headerTitle: 'Estoque Tecnicos',
+          drawerIcon: ({ color, size }) => <AntDesign name="cluster" size={24} color="black" />,
           headerRight: () => <HeaderBell count={unreadCount} onPress={() => navigation.navigate('Notificações')} />,
         })}
       />

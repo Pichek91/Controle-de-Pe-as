@@ -24,17 +24,27 @@ async function getToken() {
   return await user.getIdToken(true);
 }
 
+type UserItem = {
+  uid: string;
+  email: string | null;
+  role?: 'admin' | 'tecnico' | null;
+  displayName?: string | null;
+};
+
 export default function CadastroUsuario() {
+  const [displayName, setDisplayName] = useState(''); // NOVO: nome completo
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'admin' | 'tecnico'>('tecnico');
-  const [users, setUsers] = useState<any[]>([]);
+
+  const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [filter, setFilter] = useState<'all' | 'admin' | 'tecnico'>('all');
   const [nextPageToken, setNextPageToken] = useState<string | null>(null);
+
   const [editVisible, setEditVisible] = useState(false);
-  const [editUser, setEditUser] = useState<any>(null);
+  const [editUser, setEditUser] = useState<UserItem | null>(null);
   const [editRole, setEditRole] = useState<'admin' | 'tecnico'>('tecnico');
 
   useEffect(() => {
@@ -43,18 +53,28 @@ export default function CadastroUsuario() {
 
   async function createUser() {
     try {
+      if (!email || !password) {
+        Alert.alert('Atenção', 'Informe e-mail e senha.');
+        return;
+      }
       setCreating(true);
       const token = await getToken();
       const res = await fetch(`${API_BASE}/admin/users`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, role }),
+        body: JSON.stringify({ email, password, role, displayName }), // envia displayName
       });
-      if (!res.ok) throw new Error('Erro ao criar usuário');
+      if (!res.ok) {
+        const msg = await res.text().catch(() => 'Erro ao criar usuário');
+        throw new Error(msg);
+      }
       await res.json();
+      // limpa campos
+      setDisplayName('');
       setEmail('');
       setPassword('');
       setRole('tecnico');
+      // reseta paginação e recarrega
       setNextPageToken(null);
       await loadUsers(true);
       Alert.alert('Sucesso', 'Usuário criado com sucesso!');
@@ -73,12 +93,11 @@ export default function CadastroUsuario() {
       url.searchParams.set('role', filter);
       url.searchParams.set('limit', '50');
       if (!reset && nextPageToken) url.searchParams.set('pageToken', nextPageToken);
-
       const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error('Erro ao listar usuários');
       const data = await res.json();
-      const newUsers = Array.isArray(data?.users) ? data.users : [];
-      setNextPageToken(data?.nextPageToken || null);
+      const newUsers: UserItem[] = Array.isArray(data?.users) ? data.users : [];
+      setNextPageToken(data?.nextPageToken ?? null);
       setUsers(reset ? newUsers : [...users, ...newUsers]);
     } catch (e: any) {
       Alert.alert('Erro', e.message);
@@ -111,12 +130,8 @@ export default function CadastroUsuario() {
       'Tem certeza que deseja excluir este usuário?',
       [
         { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: () => deleteUser(uid),
-        },
-      ]
+        { text: 'Excluir', style: 'destructive', onPress: () => deleteUser(uid) },
+      ],
     );
   }
 
@@ -140,16 +155,30 @@ export default function CadastroUsuario() {
     <View style={styles.container}>
       <Text style={styles.title}>Cadastro de Usuário</Text>
 
+      {/* Nome completo */}
       <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Email</Text>
-        <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} />
+        <Text style={styles.label}>Nome completo</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Ex.: João da Silva"
+          value={displayName}
+          onChangeText={setDisplayName}
+        />
       </View>
 
+      {/* Email */}
+      <View style={styles.fieldGroup}>
+        <Text style={styles.label}>Email</Text>
+        <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} autoCapitalize="none" />
+      </View>
+
+      {/* Senha */}
       <View style={styles.fieldGroup}>
         <Text style={styles.label}>Senha</Text>
         <TextInput style={styles.input} placeholder="Senha" secureTextEntry value={password} onChangeText={setPassword} />
       </View>
 
+      {/* Tipo */}
       <View style={styles.fieldGroup}>
         <Text style={styles.label}>Tipo</Text>
         <View style={styles.roleRow}>
@@ -164,7 +193,7 @@ export default function CadastroUsuario() {
 
       <Button title={creating ? 'Criando...' : 'Criar usuário'} onPress={createUser} disabled={creating} />
 
-      {/* Chips de filtro */}
+      {/* Filtros */}
       <View style={styles.filterRow}>
         {['all', 'admin', 'tecnico'].map((f) => (
           <Pressable
@@ -179,6 +208,7 @@ export default function CadastroUsuario() {
         ))}
       </View>
 
+      {/* Header lista */}
       <View style={styles.listHeader}>
         <Text style={styles.title}>Usuários</Text>
         <Pressable onPress={() => { setNextPageToken(null); loadUsers(true); }} style={styles.refreshBtn}>
@@ -186,6 +216,7 @@ export default function CadastroUsuario() {
         </Pressable>
       </View>
 
+      {/* Lista */}
       {loading && users.length === 0 ? (
         <ActivityIndicator size="large" />
       ) : (
@@ -196,7 +227,10 @@ export default function CadastroUsuario() {
             renderItem={({ item }) => (
               <View style={styles.item}>
                 <View style={styles.itemLeft}>
-                  <Text style={styles.itemEmail}>{item.email}</Text>
+                  {item.displayName ? (
+                    <Text style={[styles.itemEmail, { fontWeight: '700' }]}>{item.displayName}</Text>
+                  ) : null}
+                  <Text style={styles.itemEmail}>{item.email ?? '(sem e-mail)'}</Text>
                   <Text style={styles.itemRole}>Tipo: {item.role ?? 'não definido'}</Text>
                 </View>
                 <View style={styles.itemActions}>
@@ -214,7 +248,7 @@ export default function CadastroUsuario() {
             )}
           />
 
-          {/* Botão Carregar mais */}
+          {/* Paginação */}
           {nextPageToken && (
             <Pressable style={styles.loadMoreBtn} onPress={() => loadUsers(false)}>
               <Text style={{ color: '#fff', fontWeight: '600' }}>Carregar mais</Text>
@@ -223,6 +257,7 @@ export default function CadastroUsuario() {
         </>
       )}
 
+      {/* Modal editar role */}
       <Modal visible={editVisible} transparent animationType="fade" onRequestClose={() => setEditVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
@@ -235,7 +270,7 @@ export default function CadastroUsuario() {
                 <Text>Admin</Text>
               </Pressable>
             </View>
-            <Button title="Salvar" onPress={() => updateRole(editUser.uid)} />
+            <Button title="Salvar" onPress={() => editUser && updateRole(editUser.uid)} />
           </View>
         </View>
       </Modal>
@@ -246,7 +281,6 @@ export default function CadastroUsuario() {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
   title: { fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
-
   fieldGroup: { marginBottom: 12 },
   label: { fontSize: 14, color: '#555', marginBottom: 6 },
   input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 10, backgroundColor: '#fff' },

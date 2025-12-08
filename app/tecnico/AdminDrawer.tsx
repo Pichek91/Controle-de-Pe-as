@@ -4,9 +4,9 @@ import { createDrawerNavigator } from '@react-navigation/drawer';
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 // ❌ import { router } from 'expo-router';  // <- vamos trocar por navigation do Drawer
+import AntDesign from '@expo/vector-icons/AntDesign';
 import { useNavigation } from '@react-navigation/native'; // ✅
 import CustomDrawerContent from '../../components/CustomDrawerContent';
-
 import CadastroScreen from './cadastro';
 import EstoqueCarroScreen from './screens/EstoqueCarroScreen';
 import EstoqueScreen from './screens/EstoqueScreen';
@@ -113,7 +113,7 @@ export default function AdminDrawer() {
           title: 'Peças à Retirar',
           headerTitle: 'Retiradas',
           drawerIcon: ({ color, size }) => (
-            <Ionicons name="clipboard-outline" size={size} color={color} />
+            <AntDesign name="carry-out" size={24} color="black" />
           ),
         }}
       />
@@ -125,7 +125,7 @@ export default function AdminDrawer() {
           title: 'Peças para Devolução',
           headerTitle: 'Devoluções',
           drawerIcon: ({ color, size }) => (
-            <Ionicons name="clipboard-outline" size={size} color={color} />
+            <AntDesign name="interaction" size={24} color="black" />
           ),
         }}
       />
