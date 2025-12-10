@@ -122,7 +122,8 @@ export default function Login() {
         keyboardType="email-address"
         style={styles.input}
         placeholder="Digite seu e-mail"
-        placeholderTextColor="#aaa"
+        placeholderTextColor="#8a8a8a"
+        selectionColor="#007bff"
       />
       <Text style={styles.label}>Senha</Text>
       <View style={styles.passwordContainer}>
@@ -132,7 +133,8 @@ export default function Login() {
           secureTextEntry={!mostrarSenha}
           style={styles.passwordInput}
           placeholder="Digite sua senha"
-          placeholderTextColor="#aaa"
+          placeholderTextColor="#8a8a8a"
+          selectionColor="#007bff"
         />
         <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)} hitSlop={8}>
           <Ionicons name={mostrarSenha ? 'eye-off' : 'eye'} size={24} color="#555" />
@@ -168,21 +170,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f2f5', // fundo moderno claro
   },
 
-logo: {
-  width: 250,
-  height: 250,
-  marginBottom: 20,
-  backgroundColor: '#fff', // harmoniza com recorte branco
-  borderRadius: 16,
-  padding: 10,
-  // Sombra para iOS
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.2,
-  shadowRadius: 20,
-  // Sombra para Android
-  elevation: 20,
-},
+  logo: {
+    width: 250,
+    height: 250,
+    marginBottom: 20,
+    backgroundColor: '#fff', // harmoniza com recorte branco
+    borderRadius: 16,
+    padding: 10,
+    // Sombra para iOS
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    // Sombra para Android
+    elevation: 20,
+  },
 
   label: {
     alignSelf: 'flex-start',
@@ -191,6 +193,7 @@ logo: {
     marginBottom: 6,
     color: '#333',
   },
+
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
@@ -200,7 +203,9 @@ logo: {
     marginBottom: 16,
     width: '100%',
     backgroundColor: '#fff',
+    color: '#000',              // força texto visível em qualquer tema
   },
+
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -212,35 +217,43 @@ logo: {
     width: '100%',
     backgroundColor: '#fff',
   },
+
   passwordInput: {
     flex: 1,
     paddingVertical: 10,
+    color: '#000',              // força texto visível em qualquer tema
   },
+
   switchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
     alignSelf: 'flex-start',
   },
+
   switchText: {
     marginLeft: 10,
     color: '#333',
   },
+
   buttonContainer: {
     width: '100%',
     marginTop: 8,
   },
+
   button: {
     backgroundColor: '#56a2f3ff',
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
   },
+
   buttonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
+
   loadingButton: {
     paddingVertical: 14,
     alignItems: 'center',
