@@ -29,31 +29,17 @@ type NotificationItem = {
 
 const ADMIN_UID = 'ADMIN';
 
-// ✅ Função para enviar push via FCM
-async function sendPushNotificationFCM(token: string, title: string, body: string) {
+// Opcional: se você tiver um hook/átomo para atualizar o badge global
+async function refreshAdminBadge() {
   try {
-    const FCM_SERVER_KEY = 'SUA_CHAVE_FCM_AQUI'; // coloque sua chave do Firebase
-    const payload = {
-      to: token,
-      notification: { title, body },
-      data: { click_action: 'FLUTTER_NOTIFICATION_CLICK' },
-    };
-
-    const response = await fetch('https://fcm.googleapis.com/fcm/send', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `key=${FCM_SERVER_KEY}`,
-      },
-      body: JSON.stringify(payload),
+    const { data } = await axios.get(`${API_BASE}/notifications/unread-count`, {
+      params: { userUid: ADMIN_UID },
+      timeout: 10000,
     });
-
-    if (!response.ok) {
-      const text = await response.text();
-      console.warn('Erro FCM:', text);
-    }
-  } catch (e) {
-    console.error('Erro ao enviar push:', e);
+    // TODO: plugue aqui seu estado global do sininho (ex.: jotai/Redux)
+    // setUnreadAdminCount(data?.count ?? 0)
+  } catch {
+    // silencioso
   }
 }
 
@@ -76,6 +62,7 @@ export default function NotificacoesScreen() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      await refreshAdminBadge();
     }
   }, []);
 
@@ -87,9 +74,7 @@ export default function NotificacoesScreen() {
     try {
       await axios.post(`${API_BASE}/notifications/${id}/read`, { userUid: ADMIN_UID }, { timeout: 10000 });
       setItems(prev => prev.map(n => (n.id === id ? { ...n, read: 1 } : n)));
-
-      // ✅ Exemplo: enviar push quando marcar como lida (opcional)
-      // Aqui você pode buscar o token do usuário no backend e chamar sendPushNotificationFCM(token, ...)
+      await refreshAdminBadge();
     } catch {
       Alert.alert('Erro', 'Falha ao marcar como lida.');
     }
@@ -102,6 +87,7 @@ export default function NotificacoesScreen() {
         timeout: 10000,
       });
       setItems(prev => prev.filter(n => n.id !== id));
+      await refreshAdminBadge();
     } catch {
       Alert.alert('Erro', 'Falha ao apagar notificação.');
     } finally {
@@ -116,9 +102,10 @@ export default function NotificacoesScreen() {
       setBusyBulkDelete(true);
       const url = `${API_BASE}/notifications/delete-all`;
       const body = { userUid: ADMIN_UID };
-      const { status } = await axios.post(url, body, { timeout: 10000 });
+      const { status } = await axios.post(url, body, { timeout: 15000 });
       if (status >= 200 && status < 300) {
         setItems([]);
+        await refreshAdminBadge();
       } else {
         Alert.alert('Erro', 'Falha ao apagar todas as notificações.');
       }
@@ -128,6 +115,11 @@ export default function NotificacoesScreen() {
       setBusyBulkDelete(false);
     }
   }, [busyBulkDelete]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchData();
+  };
 
   const renderRightActions = (
     progress: Animated.AnimatedInterpolation<string | number>,
@@ -161,9 +153,7 @@ export default function NotificacoesScreen() {
       <FlatList
         data={items}
         keyExtractor={(it) => String(it.id)}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         renderItem={({ item }) => {
           const refSetter = (sw: Swipeable | null) => {
             if (sw) swipeRefs.current.set(item.id, sw);

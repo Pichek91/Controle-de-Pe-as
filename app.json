@@ -2,12 +2,13 @@
   "expo": {
     "name": "Grancoffee Peças",
     "slug": "controle-pecas",
-    "version": "1.1.9",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "controlepecas",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
@@ -16,20 +17,26 @@
         "NSPhotoLibraryAddUsageDescription": "Precisamos salvar imagens no seu dispositivo."
       }
     },
+
     "android": {
+      "package": "com.pichek91.controlepecas",
+      "versionCode": 4,
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.pichek91.controlepecas",
       "permissions": [
-        "CAMERA"
+        "CAMERA",
+        "POST_NOTIFICATIONS"
       ]
     },
+
     "web": {
       "output": "static",
       "favicon": "./assets/images/icon.png"
     },
+
     "plugins": [
       "expo-router",
+
       [
         "expo-splash-screen",
         {
@@ -41,6 +48,7 @@
           }
         }
       ],
+
       [
         "expo-build-properties",
         {
@@ -49,20 +57,25 @@
           }
         }
       ],
+
+      "expo-notifications",
+      "expo-secure-store",
       "expo-web-browser"
     ],
+
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
     },
+
     "extra": {
       "router": {},
-      "eas": {
-        "projectId": "d356350a-58ef-47d3-a25b-30a64081e98d"
-      },
       "env": "prod",
       "apiBaseProd": "https://api.grancoffeepecas.com.br",
-      "apiBaseDev": "http://10.0.2.2:3000"
+      "apiBaseDev": "http://10.0.2.2:3000",
+      "eas": {
+        "projectId": "d356350a-58ef-47d3-a25b-30a64081e98d"
+      }
     }
   }
 }

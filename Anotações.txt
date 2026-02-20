@@ -1,0 +1,52 @@
+Comandos no vs code.
+
+API
+
+- Abrir o mysql:
+
+mysql -u root -p
+Senha: R@fa3012jana
+
+- Abrir a tabela:
+
+USE pecasdb;
+
+- Exibir as tabelas:
+
+SHOW TABLES;
+
+- Exibir a tabela peças:
+
+SELECT * FROM pecas;
+-----------------------------------------------------------------------
+
+COMANDOS PARA ENVIAR O COMMIT
+
+git status
+
+git add .
+git commit -m "NOME DO COMMIT"
+git push origin main
+
+-----------------------------------------------------------------------
+
+COMANDOS PARA INICIAR APK TESTE
+
+eas build -p android --profile preview
+
+-----------------------------------------------------------------------
+REINICIAR API
+
+pm2 restart api-pecas
+node index.js
+
+____________________________________________________
+
+PARA GERAR APK
+
+cd android para entrar na pasta, e ai gerar o codigo.
+
+.\gradlew clean
+
+Remove-Item -Recurse -Force ".\app\.cxx",".\app\build"
+

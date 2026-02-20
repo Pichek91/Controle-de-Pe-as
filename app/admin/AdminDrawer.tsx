@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { createDrawerNavigator } from '@react-navigation/drawer';
+import { CommonActions, useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -11,20 +12,19 @@ import CadastrarScreen from './screens/CadastrarScreen';
 import EstoqueScreen from './screens/EstoqueScreen';
 import EstoqueTecScreen from './screens/EstoqueTecScreen';
 import LogoutScreen from './screens/LogoutScreen';
+import NotificacoesScreen from './screens/NotificacoesScreen';
 import PecasReconScreen from './screens/PecasReconScreen';
 import PedidoScreen from './screens/PedidoScreen';
 import RecebimentosScreen from './screens/RecebimentosScreen';
 import ReconScreen from './screens/ReconScreen';
 import SeparacaoScreen from './screens/SeparacaoScreen';
-// IMPORTANTE: use a tela real de notificações
-import NotificacoesScreen from './screens/NotificacoesScreen';
 
 import { API_BASE } from '../../src/config';
 import CadastroUsuario from './screens/CadastroUsuario';
 import TreinamentoScreen from './screens/TreinamentoScreen';
 
 const Drawer = createDrawerNavigator();
-const ADMIN_UID = 'ADMIN'; // mesmo valor do .env (ADMIN_UID)
+const ADMIN_UID = 'ADMIN';
 
 function NotificationBadge({ count }: { count?: number }) {
   if (!count) return null;
@@ -48,7 +48,6 @@ function HeaderBell({ count, onPress }: { count?: number; onPress?: () => void }
   );
 }
 
-/** Hook simples de polling para unread-count do canal ADMIN */
 function useUnreadCount(userUid?: string, pollMs = 15000) {
   const [count, setCount] = useState(0);
 
@@ -63,9 +62,7 @@ function useUnreadCount(userUid?: string, pollMs = 15000) {
         timeout: 10000,
       });
       if (typeof data?.count === 'number') setCount(data.count);
-    } catch {
-      // Silenciar erro no header
-    }
+    } catch {}
   };
 
   useEffect(() => {
@@ -81,8 +78,17 @@ function useUnreadCount(userUid?: string, pollMs = 15000) {
 }
 
 export default function AdminDrawer() {
-  // Sempre contar do canal ADMIN (badge do sininho)
+  const navigation = useNavigation();
   const unreadCount = useUnreadCount(ADMIN_UID, 15000);
+
+  function trocarModulo() {
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'admin-select' as never }],
+      })
+    );
+  }
 
   const screenOptions = useMemo(
     () => ({
@@ -99,7 +105,6 @@ export default function AdminDrawer() {
     <Drawer.Navigator
       initialRouteName="Estoque de Peças"
       screenOptions={screenOptions}
-      // Passamos unreadCount pro CustomDrawerContent só se você quiser usar em outra parte
       drawerContent={(props) => <CustomDrawerContent {...props} unreadCount={unreadCount} />}
     >
       <Drawer.Screen
@@ -133,10 +138,10 @@ export default function AdminDrawer() {
       />
 
       <Drawer.Screen
-        name="Recebimentos de Peças"
+        name="Tela de Debug"
         component={RecebimentosScreen}
         options={({ navigation }) => ({
-          headerTitle: 'Recebimentos',
+          headerTitle: 'Tela Provisória',
           drawerIcon: ({ color, size }) => <Ionicons name="download-outline" size={size} color={color} />,
           headerRight: () => <HeaderBell count={unreadCount} onPress={() => navigation.navigate('Notificações')} />,
         })}
@@ -160,8 +165,8 @@ export default function AdminDrawer() {
           drawerIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} />,
           headerRight: () => <HeaderBell count={unreadCount} onPress={() => navigation.navigate('Notificações')} />,
         })}
-
       />
+
       <Drawer.Screen
         name="Pedido de Peças"
         component={PedidoScreen}
@@ -171,6 +176,7 @@ export default function AdminDrawer() {
           headerRight: () => <HeaderBell count={unreadCount} onPress={() => navigation.navigate('Notificações')} />,
         })}
       />
+
       <Drawer.Screen
         name="Treinamentos"
         component={TreinamentoScreen}
@@ -181,7 +187,7 @@ export default function AdminDrawer() {
         })}
       />
 
-            <Drawer.Screen
+      <Drawer.Screen
         name="EstoqueTec"
         component={EstoqueTecScreen}
         options={({ navigation }) => ({
@@ -211,12 +217,28 @@ export default function AdminDrawer() {
         })}
       />
 
-      {/** ✅ Tela de Notificações registrada, porém OCULTA do Drawer */}
+      {/* TROCAR MÓDULO */}
+      <Drawer.Screen
+        name="Trocar módulo"
+        component={EstoqueScreen}
+        listeners={{
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            trocarModulo();
+          },
+        }}
+        options={{
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="swap-horizontal-outline" size={size} color={color} />
+          ),
+        }}
+      />
+
       <Drawer.Screen
         name="Notificações"
         component={NotificacoesScreen}
         options={{
-          drawerItemStyle: { display: 'none' }, // esconde do menu lateral
+          drawerItemStyle: { display: 'none' },
           headerTitle: 'Notificações',
         }}
       />
