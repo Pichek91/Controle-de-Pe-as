@@ -33,7 +33,7 @@ export default function DashboardScreen() {
       const resp = await fetch(`${API_URL}/maquinas`);
       const data = await resp.json();
 
-      const estoque = data.filter((m: any) => m.status === "Estoque").length;
+      const estoque = data.length;
       const vinculadas = data.filter((m: any) => m.maquina_vinculada === true).length;
       const livres = data.filter((m: any) => m.situacao === "LIVRE").length;
       const separarEnvio = data.filter((m: any) => m.status === "Separar Envio").length;

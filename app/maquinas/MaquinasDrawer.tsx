@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+         import { Ionicons } from '@expo/vector-icons';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { useRouter } from 'expo-router';
 import React from 'react';
@@ -46,7 +46,7 @@ function trocarModulo() {
             <Ionicons name="cube-outline" size={size} color={color} />
           ),
         }}
-      />
+      /> 
 
       <Drawer.Screen
         name="Cadastro"

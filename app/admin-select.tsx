@@ -18,7 +18,8 @@ export default function AdminSelect() {
 
       <TouchableOpacity
         style={[styles.button, styles.greenButton]}
-        onPress={() => router.replace('/maquinas' as any)}
+        onPress={() => router.push('/maquinas')}
+
       >
         <Text style={styles.buttonText}>MÁQUINAS</Text>
       </TouchableOpacity>

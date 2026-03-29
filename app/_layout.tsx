@@ -4,14 +4,12 @@ import { Stack, useRootNavigationState, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
-import 'react-native-gesture-handler';
 import { MD3LightTheme as DefaultTheme, Provider as PaperProvider } from 'react-native-paper';
-import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // ====== EXISTENTE (mantido): registro via Expo Notifications ======
 import {
-  registerForPushNotificationsAsync,
+    registerForPushNotificationsAsync,
 } from '../src/notifications/notifications';
 
 // ====== NOVO: listeners de navegação via push (background/cold start) ======
