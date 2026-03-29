@@ -50,3 +50,6 @@ cd android para entrar na pasta, e ai gerar o codigo.
 
 Remove-Item -Recurse -Force ".\app\.cxx",".\app\build"
 
+
+Teste do git para passar para outro pc
+
