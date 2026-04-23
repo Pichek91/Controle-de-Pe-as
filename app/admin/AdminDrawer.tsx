@@ -18,6 +18,7 @@ import PedidoScreen from './screens/PedidoScreen';
 import RecebimentosScreen from './screens/RecebimentosScreen';
 import ReconScreen from './screens/ReconScreen';
 import SeparacaoScreen from './screens/SeparacaoScreen';
+import SolicitacoesPecasScreen from './screens/SolicitacoesPecasScreen';
 
 import { API_BASE } from '../../src/config';
 import CadastroUsuario from './screens/CadastroUsuario';
@@ -196,6 +197,23 @@ export default function AdminDrawer() {
           headerRight: () => <HeaderBell count={unreadCount} onPress={() => navigation.navigate('Notificações')} />,
         })}
       />
+
+      <Drawer.Screen
+  name="Solicitações de Peças"
+  component={SolicitacoesPecasScreen}
+  options={({ navigation }) => ({
+    headerTitle: 'Solicitações de Peças',
+    drawerIcon: ({ color, size }) => (
+      <Ionicons name="alert-circle-outline" size={size} color={color} />
+    ),
+    headerRight: () => (
+      <HeaderBell
+        count={unreadCount}
+        onPress={() => navigation.navigate('Notificações')}
+      />
+    ),
+  })}
+/>
 
       <Drawer.Screen
         name="Usuarios"

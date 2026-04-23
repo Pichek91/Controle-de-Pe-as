@@ -7,10 +7,11 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useNavigation } from '@react-navigation/native'; // ✅
 import CustomDrawerContent from '../../components/CustomDrawerContent';
-import CadastroScreen from './cadastro';
+import CadastroScreen from './screens/CadastroScreen';
 import EstoqueCarroScreen from './screens/EstoqueCarroScreen';
 import EstoqueScreen from './screens/EstoqueScreen';
 import LogoutScreen from './screens/LogoutScreen';
+import PedidoPecasTecnicoScreen from './screens/PedidoPecasTecnicoScreen';
 import RetiradasScreen from './screens/RetiradasScreen';
 
 // ✅ importe a tela de notificações
@@ -129,6 +130,18 @@ export default function AdminDrawer() {
           ),
         }}
       />
+
+      <Drawer.Screen
+  name="pedidoPecas"
+  component={PedidoPecasTecnicoScreen}
+  options={{
+    title: 'Pedido de Peças',
+    headerTitle: 'Pedido de Peças',
+    drawerIcon: ({ color, size }) => (
+      <Ionicons name="construct-outline" size={size} color={color} />
+    ),
+  }}
+/>
       
       {/* ✅ Screen OCULTA para Notificações (não aparece no menu) */}
       <Drawer.Screen

@@ -6,13 +6,14 @@ import {
   ActivityIndicator,
   FlatList,
   RefreshControl,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Se você usa @react-native-firebase/auth, troque a importação conforme sua stack.
 import { getAuth } from 'firebase/auth';
@@ -111,7 +112,7 @@ function useTecnicos() {
     setLoading(true);
     setError(null);
     try {
-      const resp = await apiGet<{ users: Tecnico[] }>('/admin/users?role=tecnico');
+      const resp = await apiGet<{ users: Tecnico[] }>('/admin/users?role=tecnico&limit=100');
       const users = (resp?.users ?? []).filter(u => !!u.uid);
       setData(users);
     } catch (e: any) {
