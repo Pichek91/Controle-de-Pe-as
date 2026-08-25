@@ -107,4 +107,7 @@ reiniciar o nano - nginx -t
 reiniciar o nano - systemctl restart nginx
 
 
+___________________GERAR APK ANDROID______________
+eas build -p android --profile preview
+
 
