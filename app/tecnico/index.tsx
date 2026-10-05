@@ -1,16 +1,5 @@
-// app/tecnico/index.tsx
-import React from 'react';
-import 'react-native-gesture-handler'; // <-- DEVE vir antes de tudo
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import AdminDrawer from './AdminDrawer';
+import { Redirect } from 'expo-router';
 
-export default function AdminIndex() {
-  return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <AdminDrawer />
-    </GestureHandlerRootView>
-  );
+export default function TecnicoIndex() {
+  return <Redirect href="/tecnico/estoque" />;
 }
-
-// Se você ainda usa isso, pode manter
-AdminIndex.options = { headerShown: false };

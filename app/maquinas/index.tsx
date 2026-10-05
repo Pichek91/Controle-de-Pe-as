@@ -1,6 +1,5 @@
-import React from "react";
-import MaquinasDrawer from "../maquinas/MaquinasDrawer";
+﻿import { Redirect } from 'expo-router';
 
-export default function Index() {
-  return <MaquinasDrawer />;
+export default function MaquinasIndex() {
+  return <Redirect href="/maquinas/dashboard" />;
 }

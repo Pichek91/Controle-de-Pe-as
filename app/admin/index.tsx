@@ -1,11 +1,5 @@
-import React from 'react';
-import AdminDrawer from './AdminDrawer';
+import { Redirect } from 'expo-router';
 
 export default function AdminIndex() {
-  return <AdminDrawer />;
+  return <Redirect href="/admin/estoque" />;
 }
-
-// Oculta o cabeçalho padrão do Expo Router
-AdminIndex.options = {
-  headerShown: false,
-};

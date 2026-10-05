@@ -110,4 +110,12 @@ reiniciar o nano - systemctl restart nginx
 ___________________GERAR APK ANDROID______________
 eas build -p android --profile preview
 
+_______________TESTE PARA ERROS______________
+npx tsc --noEmit
+
+________________GERAR APK DE TESTE____________________
+eas build -p android --profile development
+
+________________RODAR NO BUILD______________
+npx expo start --dev-client
 

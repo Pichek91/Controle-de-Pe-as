@@ -3,11 +3,14 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   DrawerContentComponentProps,
   DrawerContentScrollView,
+  DrawerItem,
   DrawerItemList,
-} from '@react-navigation/drawer';
+} from 'expo-router/drawer';
+
 import Constants from 'expo-constants';
 import * as ImagePicker from 'expo-image-picker';
-import React, { useState } from 'react';
+import { router } from 'expo-router';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -193,11 +196,24 @@ export default function CustomDrawerContent(props: CustomProps) {
           </TouchableOpacity>
         </View>
 
-        {/* Nome do usuário */}
-        <Text style={styles.displayName}>{displayName}</Text>
+{/* Nome do usuário */}
+<Text style={styles.displayName}>{displayName}</Text>
 
-        {/* Itens do Drawer */}
-        <DrawerItemList {...props} />
+{/* Itens do Drawer */}
+<DrawerItemList {...props} />
+
+{/* Trocar módulo */}
+<DrawerItem
+  label="Trocar módulo"
+  icon={({ color, size }) => (
+    <Ionicons
+      name="swap-horizontal-outline"
+      size={size}
+      color={color}
+    />
+  )}
+  onPress={() => router.replace('/admin-select')}
+/>
       </DrawerContentScrollView>
 
       {/* Rodapé apenas com versão */}

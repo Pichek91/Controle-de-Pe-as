@@ -1,2 +1,1 @@
-import LogoutScreen from './screens/LogoutScreen';
-export default LogoutScreen;
+﻿export { default } from '../../src/screens/tecnico/LogoutScreen';

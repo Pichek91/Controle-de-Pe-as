@@ -1,37 +1,66 @@
-
 // src/notifications/useUnreadBadgeRealtime.ts
+
 import axios from 'axios';
 import * as Notifications from 'expo-notifications';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
+
 import { API_BASE } from '../config';
 
 /**
- * Hook para atualizar badge do ADM em tempo real (foreground).
- * Se você tiver um estado global do badge, passe um callback onCount.
+ * Mantém o contador de notificações não lidas atualizado
+ * enquanto o aplicativo está em foreground.
+ *
+ * O UID deve ser o UID real do usuário autenticado no Firebase.
  */
-export function useUnreadBadgeRealtimeAdmin(onCount?: (n: number) => void) {
-  async function refreshCount() {
-    const userUid = 'ADMIN';
+export function useUnreadBadgeRealtimeAdmin(
+  userUid?: string,
+  onCount?: (count: number) => void
+) {
+  const refreshCount = useCallback(async () => {
+    if (!userUid) {
+      onCount?.(0);
+      return;
+    }
+
     try {
-      const { data } = await axios.get(`${API_BASE}/notifications/unread-count`, {
-        params: { userUid },
-        timeout: 10000,
-      });
-      if (typeof onCount === 'function') onCount(Number(data?.count ?? 0));
-    } catch {}
-  }
+      const { data } = await axios.get(
+        `${API_BASE}/notifications/unread-count`,
+        {
+          params: {
+            userUid,
+          },
+          timeout: 10000,
+        }
+      );
+
+      onCount?.(
+        Number(data?.count ?? 0)
+      );
+    } catch {
+      // Mantém o valor atual caso a API esteja
+      // temporariamente indisponível.
+    }
+  }, [userUid, onCount]);
 
   useEffect(() => {
-    // Atualiza ao montar
-    refreshCount();
+    // Atualiza ao montar ou quando o usuário mudar.
+    void refreshCount();
 
-    // Atualiza quando uma notificação chega com o app em FOREGROUND
-    const sub = Notifications.addNotificationReceivedListener(async (_notif) => {
-      await refreshCount();
-    });
+    // Quando um novo push chega com o aplicativo aberto,
+    // atualiza imediatamente o contador.
+    const subscription =
+      Notifications.addNotificationReceivedListener(
+        () => {
+          void refreshCount();
+        }
+      );
 
     return () => {
-      sub?.remove?.();
+      subscription.remove();
     };
-  }, []);
+  }, [refreshCount]);
+
+  return {
+    refreshCount,
+  };
 }

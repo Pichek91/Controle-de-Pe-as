@@ -10,7 +10,6 @@ const STORAGE_KEY = '@expoPushToken';
 // Comportamento quando a notificação chega em foreground
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
     shouldPlaySound: false,
     shouldSetBadge: false,
     shouldShowBanner: true,

@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "3614338897",
+    "firebase_url": "https://controlepecas-3f149-default-rtdb.firebaseio.com",
+    "project_id": "controlepecas-3f149",
+    "storage_bucket": "controlepecas-3f149.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:3614338897:android:30287296f1c9b3ad02ed70",
+        "android_client_info": {
+          "package_name": "com.pichek91.controlepecas"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCH3dQfCpDCxabRx7ZKN_SiEkV8hkqMkZk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

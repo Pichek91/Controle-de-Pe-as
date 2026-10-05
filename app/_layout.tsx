@@ -1,19 +1,14 @@
-
 // app/_layout.tsx
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Stack, useRootNavigationState, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect } from 'react';
-import { MD3LightTheme as DefaultTheme, Provider as PaperProvider } from 'react-native-paper';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-
-// ====== EXISTENTE (mantido): registro via Expo Notifications ======
+import { useEffect } from 'react';
 import {
-    registerForPushNotificationsAsync,
-} from '../src/notifications/notifications';
-
-// ====== NOVO: listeners de navegação via push (background/cold start) ======
-import { setupNotificationNavigation } from '../src/notifications/linking';
+  MD3LightTheme as DefaultTheme,
+  Provider as PaperProvider,
+} from 'react-native-paper';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // (PARTE B) Quando integrar FCM por usuário, vamos usar estes serviços:
 // import { registerDeviceToken, removeDeviceToken } from '../src/notifications/pushTokenService';
@@ -44,21 +39,65 @@ export default function Layout() {
   const router = useRouter();
   const rootState = useRootNavigationState();
 
-  // 🔗 NOVO: ativa a navegação a partir do push (app fechado/segundo plano)
+  const isExpoGo =
+    Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
+  // Navegação ao tocar em uma notificação.
+  // Expo Go Android não suporta push remoto via expo-notifications.
   useEffect(() => {
-    setupNotificationNavigation();
-  }, []);
+    if (isExpoGo) {
+      console.log('ℹ️ Expo Go: navegação por push remoto desativada.');
+      return;
+    }
+
+    let active = true;
+
+    (async () => {
+      try {
+        const { setupNotificationNavigation } = await import(
+          '../src/notifications/linking'
+        );
+
+        if (active) {
+          setupNotificationNavigation();
+        }
+      } catch (error) {
+        console.warn(
+          'Falha ao configurar navegação das notificações:',
+          error
+        );
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [isExpoGo]);
 
   useEffect(() => {
     if (!rootState?.key) return;
 
     let splashTimer: ReturnType<typeof setTimeout>;
+    let active = true;
 
     (async () => {
       try {
-        // ====== EXISTENTE (mantido): registro via Expo Notifications ======
-        const expoToken = await registerForPushNotificationsAsync();
-        console.log('📲 Expo Push Token:', expoToken);
+        // No Expo Go não carregamos expo-notifications.
+        // Em Development Build/APK o funcionamento original é preservado.
+        if (!isExpoGo) {
+          const { registerForPushNotificationsAsync } = await import(
+            '../src/notifications/notifications'
+          );
+
+          const expoToken =
+            await registerForPushNotificationsAsync();
+
+          console.log('📲 Expo Push Token:', expoToken);
+        } else {
+          console.log(
+            'ℹ️ Expo Go: registro de push remoto ignorado.'
+          );
+        }
 
         // (PARTE B) — quando integrarmos FCM por usuário (token do Firebase):
         // - Após login, chamaremos registerDeviceToken(uid)
@@ -69,9 +108,8 @@ export default function Layout() {
         //
         // const unsubAuth = auth().onAuthStateChanged(async (user) => {
         //   if (user?.uid) {
-        //     // registra token FCM do device no backend
         //     await registerDeviceToken(user.uid);
-        //     // atualiza quando o FCM renovar o token
+        //
         //     messaging().onTokenRefresh(async (newToken) => {
         //       try {
         //         await axios.post(`${API_BASE}/device-token`, {
@@ -84,28 +122,41 @@ export default function Layout() {
         //       }
         //     });
         //   } else {
-        //     // remove token do backend no logout
         //     await removeDeviceToken().catch(() => {});
         //   }
         // });
 
-        // Splash control (mantido)
+        if (!active) return;
+
+        // Splash control
         splashTimer = setTimeout(async () => {
           await SplashScreen.hideAsync();
-          router.replace('/login');
+
+          if (active) {
+            router.replace('/login');
+          }
         }, 2000);
       } catch (err) {
-        console.error(err);
+        console.error('Erro durante inicialização:', err);
+
         await SplashScreen.hideAsync();
-        router.replace('/login');
+
+        if (active) {
+          router.replace('/login');
+        }
       }
     })();
 
     return () => {
-      if (splashTimer) clearTimeout(splashTimer);
-      // if (typeof unsubAuth === 'function') unsubAuth(); // (PARTE B) descomente quando integrar auth
+      active = false;
+
+      if (splashTimer) {
+        clearTimeout(splashTimer);
+      }
+
+      // if (typeof unsubAuth === 'function') unsubAuth();
     };
-  }, [rootState?.key, router]);
+  }, [rootState?.key, router, isExpoGo]);
 
   return (
     <SafeAreaProvider>
