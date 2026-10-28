@@ -108,7 +108,7 @@ export default function EstoqueScreen() {
   const onPressPeca = (item: Peca) => {
     const estoque = Number(item.quantidade || 0);
     if (estoque <= 0) {
-      Alert.alert('Sem estoque', 'Esta peÃ§a estÃ¡ sem saldo no estoque geral.');
+      Alert.alert('Sem estoque', 'Esta peça está sem saldo no estoque geral.');
       return;
     }
     setPecaSelecionada(item);
@@ -144,7 +144,7 @@ export default function EstoqueScreen() {
   // abre BoxList conforme tipo
   const openBoxList = () => {
     if (!filterType) {
-      Alert.alert('Filtro', 'Escolha â€œMarcaâ€ ou â€œModeloâ€ antes.');
+      Alert.alert('Filtro', 'Escolha Marca ou Modelo antes.');
       return;
     }
     setBoxListOpen(true);
@@ -160,11 +160,11 @@ export default function EstoqueScreen() {
     const qty = Number(qtySolicitar || 0);
 
     if (qty <= 0) {
-      Alert.alert('Quantidade invÃ¡lida', 'Escolha pelo menos 1 unidade.');
+      Alert.alert('Quantidade inválida', 'Escolha pelo menos 1 unidade.');
       return;
     }
     if (qty > estoque) {
-      Alert.alert('Quantidade indisponÃ­vel', `MÃ¡ximo disponÃ­vel: ${estoque}.`);
+      Alert.alert('Quantidade indisponível', `Máximo disponível: ${estoque}.`);
       return;
     }
 
@@ -199,7 +199,7 @@ export default function EstoqueScreen() {
       // 3) Feedback e atualizaÃ§Ã£o
       Alert.alert(
         'Solicitado',
-        'Pedido enviado para separaÃ§Ã£o. Aguarde o administrador preparar a peÃ§a.'
+        'Pedido enviado para separação. Aguarde o administrador preparar a peça.'
       );
       setSolicitarOpen(false);
       setPecaSelecionada(null);
@@ -208,10 +208,10 @@ export default function EstoqueScreen() {
       // Recarrega a lista para refletir a baixa do estoque geral
       await fetchPecas();
     } catch (err: any) {
-      console.log('ERRO solicitar separaÃ§Ã£o =>', err?.response?.status, err?.response?.data);
+      console.log('ERRO solicitar separação =>', err?.response?.status, err?.response?.data);
       const msg =
         err?.response?.data?.error ||
-        'NÃ£o foi possÃ­vel enviar a solicitaÃ§Ã£o. Tente novamente.';
+        'Não foi possível enviar a solicitação. Tente novamente.';
       Alert.alert('Erro', msg);
     } finally {
       setSending(false);
@@ -279,7 +279,7 @@ export default function EstoqueScreen() {
             >
               <Ionicons name="chevron-down" size={18} color="#2e7d32" />
               <Text style={styles.boxListBtnText}>
-                {filterValue ? 'Trocar opÃ§Ã£o' : 'Escolher opÃ§Ã£o'}
+                {filterValue ? 'Trocar opção' : 'Escolher opção'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -337,7 +337,7 @@ export default function EstoqueScreen() {
         onRefresh={onRefresh}
         ListEmptyComponent={
           <View style={{ alignItems: 'center', marginTop: 40 }}>
-            <Text style={{ color: '#777' }}>Nenhuma peÃ§a encontrada.</Text>
+            <Text style={{ color: '#777' }}>Nenhuma peça encontrada.</Text>
           </View>
         }
         contentContainerStyle={{ paddingBottom: 16 }}
@@ -393,7 +393,7 @@ export default function EstoqueScreen() {
                 ListEmptyComponent={
                   <View style={{ paddingVertical: 24, alignItems: 'center' }}>
                     <Text style={{ color: '#777' }}>
-                      {filterType ? 'Sem opÃ§Ãµes disponÃ­veis.' : 'Escolha Marca ou Modelo.'}
+                      {filterType ? 'Sem opções disponíveis.' : 'Escolha Marca ou Modelo.'}
                     </Text>
                   </View>
                 }
@@ -407,7 +407,7 @@ export default function EstoqueScreen() {
         </View>
       </Modal>
 
-      {/* === NOVO === Modal de solicitaÃ§Ã£o de separaÃ§Ã£o */}
+      {/* === NOVO === Modal de solicitação de separação */}
       <Modal
         visible={solicitarOpen}
         transparent
@@ -418,7 +418,7 @@ export default function EstoqueScreen() {
           <Pressable style={styles.modalOverlay} onPress={() => setSolicitarOpen(false)} />
           <View style={styles.boxListContainer}>
             <View style={styles.boxListHeader}>
-              <Text style={styles.boxListTitle}>Solicitar separaÃ§Ã£o</Text>
+              <Text style={styles.boxListTitle}>Solicitar separação</Text>
               <TouchableOpacity onPress={() => setSolicitarOpen(false)}>
                 <Ionicons name="close" size={22} color="#333" />
               </TouchableOpacity>
@@ -430,10 +430,10 @@ export default function EstoqueScreen() {
                   {pecaSelecionada.nome}
                 </Text>
                 <Text style={{ color: '#555' }}>
-                  Código: {pecaSelecionada.codigo ?? '-'} â€¢ Marca: {pecaSelecionada.marca ?? '-'}
+                  Código: {pecaSelecionada.codigo ?? '-'} • Marca: {pecaSelecionada.marca ?? '-'}
                 </Text>
                 <Text style={{ color: '#1b5e20', fontWeight: '700' }}>
-                  DisponÃ­vel: {Number(pecaSelecionada.quantidade || 0)}
+                  Disponível: {Number(pecaSelecionada.quantidade || 0)}
                 </Text>
               </View>
             )}
@@ -499,7 +499,7 @@ export default function EstoqueScreen() {
               disabled={sending}
             >
               <Text style={{ color: '#fff', fontWeight: '700' }}>
-                {sending ? 'Enviando...' : 'Solicitar separaÃ§Ã£o'}
+                {sending ? 'Enviando...' : 'Solicitar separação'}
               </Text>
             </TouchableOpacity>
           </View>

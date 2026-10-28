@@ -202,18 +202,23 @@ export default function CustomDrawerContent(props: CustomProps) {
 {/* Itens do Drawer */}
 <DrawerItemList {...props} />
 
-{/* Trocar módulo */}
-<DrawerItem
-  label="Trocar módulo"
-  icon={({ color, size }) => (
-    <Ionicons
-      name="swap-horizontal-outline"
-      size={size}
-      color={color}
-    />
-  )}
-  onPress={() => router.replace('/admin-select')}
-/>
+{/* Trocar módulo — somente fora da área do técnico */}
+{!props.state.routes.some(
+  (route) => route.name === 'pedido-pecas'
+) && (
+  <DrawerItem
+    label="Trocar módulo"
+    icon={({ color, size }) => (
+      <Ionicons
+        name="swap-horizontal-outline"
+        size={size}
+        color={color}
+      />
+    )}
+    onPress={() => router.replace('/admin-select')}
+  />
+)}
+
       </DrawerContentScrollView>
 
       {/* Rodapé apenas com versão */}

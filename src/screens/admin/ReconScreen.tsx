@@ -1,5 +1,6 @@
 import axios from 'axios';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -96,14 +97,16 @@ export default function ReconScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchRecon();
-  }, [fetchRecon]);
+useFocusEffect(
+  useCallback(() => {
+    void fetchRecon();
+  }, [fetchRecon])
+);
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchRecon();
-  }, [fetchRecon]);
+const onRefresh = useCallback(() => {
+  setRefreshing(true);
+  void fetchRecon();
+}, [fetchRecon]);
 
   const headerSubtitle = useMemo(
     () =>

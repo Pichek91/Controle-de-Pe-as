@@ -7,48 +7,68 @@ import { getAuth } from 'firebase/auth';
 
 import { API_BASE } from '../config';
 
-/**
- * Processa uma notificação que foi aberta pelo usuário.
- */
-async function openFromNotification(
+// =====================================================
+// TIPOS
+// =====================================================
+
+type NotificationData = {
+  route?: string;
+  notificationId?: string | number;
+};
+
+// =====================================================
+// UTILITÁRIOS
+// =====================================================
+
+function getNotificationData(
   notification: Notifications.Notification
-) {
-  const data = notification?.request?.content?.data as
-    | {
-        route?: string;
-        notificationId?: string | number;
-      }
-    | undefined;
+): NotificationData {
+  return (
+    notification?.request?.content?.data ?? {}
+  ) as NotificationData;
+}
 
-  const route = data?.route;
-  const notificationId = data?.notificationId;
-
-  /**
-   * Abre a rota enviada pelo backend.
-   */
-  if (route) {
-    const normalizedRoute = String(route).startsWith('/')
-      ? String(route)
-      : `/${route}`;
-
-    router.navigate(normalizedRoute as any);
+/**
+ * Normaliza uma rota recebida pelo backend.
+ *
+ * Exemplo:
+ * tecnico/retiradas
+ *
+ * vira:
+ * /tecnico/retiradas
+ */
+function normalizeRoute(
+  route?: string
+): string | null {
+  if (!route) {
+    return null;
   }
 
-  /**
-   * Obtém o UID real do usuário atualmente autenticado.
-   *
-   * Não usamos mais o antigo usuário compartilhado "ADMIN".
-   */
-  const userUid = getAuth().currentUser?.uid;
+  const value = String(route).trim();
+
+  if (!value) {
+    return null;
+  }
+
+  return value.startsWith('/')
+    ? value
+    : `/${value}`;
+}
+
+// =====================================================
+// MARCAR NOTIFICAÇÃO COMO LIDA
+// =====================================================
+
+async function markNotificationAsRead(
+  notificationId?: string | number
+) {
+  const userUid =
+    getAuth().currentUser?.uid;
 
   if (!userUid) {
     return;
   }
 
-  /**
-   * Se o backend enviou o ID da notificação,
-   * marca essa notificação como lida.
-   */
   if (notificationId) {
     try {
       await axios.post(
@@ -68,11 +88,6 @@ async function openFromNotification(
     }
   }
 
-  /**
-   * Atualiza/consulta a quantidade de notificações não lidas.
-   *
-   * O header também possui sua própria atualização periódica.
-   */
   try {
     await axios.get(
       `${API_BASE}/notifications/unread-count`,
@@ -84,21 +99,95 @@ async function openFromNotification(
       }
     );
   } catch {
-    // Não impede a navegação caso a consulta do contador falhe.
+    // Falha no contador não impede a navegação.
   }
 }
 
-/**
- * Configura a navegação através das notificações push.
- *
- * Trata:
- * 1. Push tocado enquanto o app está aberto/em segundo plano.
- * 2. Push que abriu o aplicativo quando ele estava fechado.
- */
-export function setupNotificationNavigation() {
-  /**
-   * App já estava executando.
+// =====================================================
+// PROCESSAR CLIQUE COM APP JÁ ABERTO
+// =====================================================
+
+async function openFromNotification(
+  notification: Notifications.Notification
+) {
+  const data =
+    getNotificationData(notification);
+
+  const route =
+    normalizeRoute(data.route);
+
+  /*
+   * Aqui o aplicativo já está executando,
+   * então podemos navegar imediatamente.
    */
+  if (route) {
+    router.navigate(route as any);
+  }
+
+  await markNotificationAsRead(
+    data.notificationId
+  );
+}
+
+// =====================================================
+// VERIFICAR SE O APP FOI ABERTO POR PUSH
+// =====================================================
+
+export async function getInitialNotificationRoute():
+  Promise<string | null> {
+  try {
+    const response =
+      await Notifications.getLastNotificationResponseAsync();
+
+    if (!response?.notification) {
+      return null;
+    }
+
+    const data =
+      getNotificationData(
+        response.notification
+      );
+
+    const route =
+      normalizeRoute(data.route);
+
+    /*
+     * Marca como lida, mas NÃO navega daqui.
+     *
+     * O _layout.tsx decidirá a rota inicial
+     * somente depois que o Router estiver pronto.
+     */
+    await markNotificationAsRead(
+      data.notificationId
+    );
+
+    /*
+     * Limpa a resposta para evitar que a mesma
+     * notificação seja reutilizada em uma próxima
+     * inicialização do aplicativo.
+     */
+    try {
+      await Notifications.clearLastNotificationResponseAsync();
+    } catch {
+      // Não impede a abertura da rota.
+    }
+
+    return route;
+  } catch (error) {
+    console.warn(
+      'Não foi possível verificar a notificação que abriu o app:',
+      error
+    );
+
+    return null;
+  }
+}
+
+// =====================================================
+// LISTENER PARA APP JÁ EXECUTANDO
+// =====================================================
+
+export function setupNotificationNavigation() {
   const subscription =
     Notifications.addNotificationResponseReceivedListener(
       (response) => {
@@ -108,27 +197,6 @@ export function setupNotificationNavigation() {
       }
     );
 
-  /**
-   * App foi iniciado através de uma notificação.
-   */
-  void Notifications.getLastNotificationResponseAsync()
-    .then((response) => {
-      if (response?.notification) {
-        return openFromNotification(
-          response.notification
-        );
-      }
-    })
-    .catch((error) => {
-      console.warn(
-        'Não foi possível processar a notificação que abriu o app:',
-        error
-      );
-    });
-
-  /**
-   * Permite remover o listener caso necessário.
-   */
   return () => {
     subscription.remove();
   };

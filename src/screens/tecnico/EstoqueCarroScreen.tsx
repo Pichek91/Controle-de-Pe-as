@@ -72,7 +72,7 @@ export default function EstoqueCarroScreen() {
   const fetchEstoque = useCallback(async () => {
     if (!ownerUid) {
       setLoading(false);
-      Alert.alert('AtenÃ§Ã£o', 'UsuÃ¡rio nÃ£o autenticado.');
+      Alert.alert('Atenção', 'Usuário não autenticado.');
       return;
     }
     try {
@@ -81,7 +81,7 @@ export default function EstoqueCarroScreen() {
       setItems(Array.isArray(data) ? data : []);
     } catch (err: any) {
       console.log('Erro ao buscar estoque do carro =>', err?.message);
-      Alert.alert('Erro', 'NÃ£o foi possÃ­vel carregar o estoque do carro.');
+      Alert.alert('Erro', 'Não foi possível carregar o estoque do carro.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -135,7 +135,7 @@ export default function EstoqueCarroScreen() {
       setForm((f) => ({ ...f, quantidade: novaQuantidade }));
     } catch (err: any) {
       console.log('ERRO atualizarQuantidade =>', err?.response?.status, err?.response?.data);
-      Alert.alert('Erro', 'NÃ£o foi possÃ­vel atualizar a quantidade.');
+      Alert.alert('Erro', 'Não foi possível atualizar a quantidade.');
     }
   };
 
@@ -162,7 +162,7 @@ export default function EstoqueCarroScreen() {
       fetchEstoque();
     } catch (err: any) {
       console.log('ERRO salvarEdicao =>', err?.response?.status, err?.response?.data);
-      Alert.alert('Erro', 'NÃ£o foi possÃ­vel atualizar.');
+      Alert.alert('Erro', 'Não foi possível atualizar.');
     }
   };
 
@@ -193,7 +193,7 @@ export default function EstoqueCarroScreen() {
     if (!selected?.id) return;
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert('PermissÃ£o negada', 'Ã‰ necessÃ¡rio permitir acesso Ã  galeria.');
+      Alert.alert('Permissão negada', 'É necessário permitir acesso à galeria.');
       return;
     }
     const res = await ImagePicker.launchImageLibraryAsync({
@@ -225,13 +225,13 @@ export default function EstoqueCarroScreen() {
         onPress: async () => {
           try {
             await axios.delete(`${ENDPOINTS.estoqueCarro}/${selected.id}`, { timeout: 15000 });
-            Alert.alert('Sucesso', 'Item excluÃ­do.');
+            Alert.alert('Sucesso', 'Item excluído.');
             setSelected(null);
             setForm({});
             fetchEstoque();
           } catch (err: any) {
             console.log('ERRO excluir =>', err?.response?.status, err?.response?.data);
-            Alert.alert('Erro', 'NÃ£o foi possÃ­vel excluir.');
+            Alert.alert('Erro', 'Não foi possível excluir.');
           }
         },
       },
@@ -256,7 +256,7 @@ export default function EstoqueCarroScreen() {
 
   return (
     <View style={styles.container}>
-      {/* ======= BARRA DE BUSCA (com Ã­cone de filtro) ======= */}
+      {/* ======= BARRA DE BUSCA (com ícone de filtro) ======= */}
       <View style={styles.searchBarRow}>
         <TextInput
           style={[styles.searchInput, { flex: 1 }]}
@@ -325,13 +325,13 @@ export default function EstoqueCarroScreen() {
                     style={styles.selectBtn}
                     textColor="#7A7F85"
                   >
-                    {pendingFilter ? pendingFilter : 'Escolher opÃ§Ã£o'}
+                    {pendingFilter ? pendingFilter : 'Escolher opção'}
                   </Button>
                 }
               >
                 {optionList.length === 0 && (
                   <>
-                    <Menu.Item title="(sem opÃ§Ãµes)" disabled />
+                    <Menu.Item title="(sem opções)" disabled />
                     <Divider />
                   </>
                 )}
@@ -348,7 +348,7 @@ export default function EstoqueCarroScreen() {
               </Menu>
             </View>
 
-            {/* AÃ§Ãµes "Limpar filtro" e "Aplicar" */}
+            {/* Ações "Limpar filtro" e "Aplicar" */}
             <View style={styles.filterActionsRow}>
               <Button
                 mode="contained-tonal"
@@ -396,7 +396,7 @@ export default function EstoqueCarroScreen() {
             <>
               <Image source={{ uri: getImageUri(form.imagem as any) }} style={styles.modalImage} />
 
-              {/* VISUALIZAÃ‡ÃƒO */}
+              {/* VISUALIZAÇÂO */}
               {!editMode && (
                 <>
                   <Text style={styles.title}>{selected.nome}</Text>
@@ -433,7 +433,7 @@ export default function EstoqueCarroScreen() {
                 </>
               )}
 
-              {/* EDIÃ‡ÃƒO */}
+              {/* EDIÇÃO */}
               {editMode && (
                 <>
                   <Text style={styles.label}>Nome</Text>
@@ -456,7 +456,7 @@ export default function EstoqueCarroScreen() {
                     onChangeText={(t) => handleChange('quantidade', t)}
                   />
 
-                  <Text style={styles.label}>Estoque MÃ­nimo</Text>
+                  <Text style={styles.label}>Estoque Mí­nimo</Text>
                   <TextInput
                     style={styles.input}
                     value={String(form.estoqueMin ?? '')}
@@ -464,7 +464,7 @@ export default function EstoqueCarroScreen() {
                     onChangeText={(t) => handleChange('estoqueMin', t)}
                   />
 
-                  <Text style={styles.label}>Estoque MÃ¡ximo</Text>
+                  <Text style={styles.label}>Estoque Máximo</Text>
                   <TextInput
                     style={styles.input}
                     value={String(form.estoqueMax ?? '')}
@@ -492,7 +492,7 @@ export default function EstoqueCarroScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 10 },
 
-  // barra de busca + Ã­cone filtro
+  // barra de busca + ícone filtro
   searchBarRow: {
     flexDirection: 'row',
     alignItems: 'center',
