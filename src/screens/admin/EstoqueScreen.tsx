@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -204,6 +204,9 @@ export default function EstoqueScreen() {
         <Text style={styles.title}>{item.nome}</Text>
         <Text style={styles.subtitle}>Código: {item.codigo}</Text>
         <Text style={styles.subtitle}>Marca: {item.marca}</Text>
+        <View style={styles.stockBadge}>
+          <Text style={styles.stockBadgeText}>Em estoque: {item.quantidade ?? 0}</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -384,13 +387,34 @@ export default function EstoqueScreen() {
                 </>
               ) : (
                 <>
-                  <Text style={styles.title}>{selectedPeca.nome}</Text>
-                  <Text>Código: {selectedPeca.codigo}</Text>
-                  <Text>Marca: {selectedPeca.marca}</Text>
-                  <Text>Modelo: {selectedPeca.modelo}</Text>
-                  <Text>Quantidade: {selectedPeca.quantidade}</Text>
-                  <Text>Estoque Min: {selectedPeca.estoqueMin}</Text>
-                  <Text>Estoque Max: {selectedPeca.estoqueMax}</Text>
+                  <View style={styles.detailCard}>
+                    <Text style={styles.detailLabel}>Nome da peça</Text>
+                    <Text style={styles.detailTitle}>{selectedPeca.nome}</Text>
+                  </View>
+                  <View style={styles.detailCard}>
+                    <Text style={styles.detailLabel}>Código</Text>
+                    <Text style={styles.detailValue}>{selectedPeca.codigo}</Text>
+                  </View>
+                  <View style={styles.detailCard}>
+                    <Text style={styles.detailLabel}>Marca</Text>
+                    <Text style={styles.detailValue}>{selectedPeca.marca}</Text>
+                  </View>
+                  <View style={styles.detailCard}>
+                    <Text style={styles.detailLabel}>Modelo</Text>
+                    <Text style={styles.detailValue}>{selectedPeca.modelo}</Text>
+                  </View>
+                  <View style={styles.detailCard}>
+                    <Text style={styles.detailLabel}>Quantidade em estoque</Text>
+                    <Text style={styles.detailValue}>{selectedPeca.quantidade}</Text>
+                  </View>
+                  <View style={styles.detailCard}>
+                    <Text style={styles.detailLabel}>Estoque mínimo</Text>
+                    <Text style={styles.detailValue}>{selectedPeca.estoqueMin}</Text>
+                  </View>
+                  <View style={styles.detailCard}>
+                    <Text style={styles.detailLabel}>Estoque máximo</Text>
+                    <Text style={styles.detailValue}>{selectedPeca.estoqueMax}</Text>
+                  </View>
                   <Button mode="contained" style={styles.button} onPress={() => setEditMode(true)}>
                     Editar
                   </Button>
@@ -439,9 +463,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   image: { width: 80, height: 80, marginRight: 10, borderRadius: 8, backgroundColor: '#f2f2f2' },
-  title: { fontSize: 16, fontWeight: 'bold' },
-  subtitle: { fontSize: 14, color: '#555' },
-  modalContainer: { padding: 20, alignItems: 'center' },
+  title: { fontSize: 18, fontWeight: 'bold', color: '#17212B', marginBottom: 4 },
+  subtitle: { fontSize: 15, color: '#475569', marginTop: 2 },
+  stockBadge: { alignSelf: 'flex-start', backgroundColor: '#E8F5E9', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5, marginTop: 8 },
+  stockBadgeText: { fontSize: 15, fontWeight: '700', color: '#216E39' },
+  detailCard: { width: '100%', borderWidth: 1, borderColor: '#DCE5E0', borderRadius: 14, backgroundColor: '#FFFFFF', paddingHorizontal: 16, paddingVertical: 13, marginBottom: 10 },
+  detailLabel: { fontSize: 14, fontWeight: '600', color: '#64748B', marginBottom: 5 },
+  detailTitle: { fontSize: 22, fontWeight: '700', color: '#15251B' },
+  detailValue: { fontSize: 19, fontWeight: '600', color: '#17212B' },
+  modalContainer: { padding: 18, alignItems: 'center', backgroundColor: '#F7F9F8' },
   modalImage: { width: '100%', height: 200, marginBottom: 20, borderRadius: 10, backgroundColor: '#f2f2f2' },
   input: { borderWidth: 1, borderColor: '#ccc', padding: 10, marginBottom: 10, borderRadius: 5, width: '100%' },
   label: { fontSize: 14, fontWeight: 'bold', marginBottom: 4, marginTop: 10 },
